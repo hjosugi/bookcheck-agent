@@ -1,6 +1,10 @@
 /* ===== Enhanced layout: sidebar + chat ===== */
 /* Matches the base look: white, #f0f0f0 hairlines, #111 text. */
 
+:root {
+  --local-badge-h: 26px;
+}
+
 .shell {
   display: flex;
   height: 100vh;
@@ -183,17 +187,37 @@
 }
 
 /* ===== Local mode badge ===== */
+/* The badge is fixed, so it does not take part in layout. Its
+   height is a variable because .shell has to subtract it. */
 .local-badge {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 50;
-  padding: 3px 10px;
-  text-align: center;
+  height: var(--local-badge-h);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
   font-size: 0.7rem;
   letter-spacing: 0.04em;
   background: #ffe9a8;
   color: #7a5c00;
   border-bottom: 1px solid #e2cf95;
+}
+
+/* Local mode only. AppAuthProvider renders the badge as the direct
+   sibling before the page, so this never applies in cloud mode.
+   Without it the app starts at y=0 and the fixed badge covers the
+   top of the "新刊チェッカー" heading. */
+.local-badge + .shell {
+  margin-top: var(--local-badge-h);
+  height: calc(100vh - var(--local-badge-h));
+}
+
+/* Pull the heading away from the badge so it reads as the top of
+   the app rather than something tucked under a banner. */
+.local-badge + .shell .header {
+  padding-top: 28px;
 }
