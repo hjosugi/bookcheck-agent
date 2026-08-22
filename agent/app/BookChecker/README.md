@@ -22,8 +22,14 @@ AgentCore CLI が CodeBuild でイメージを構築し、ECR と AgentCore Runt
 へ反映します。
 
 先に [AWS_SETUP.md](../../../AWS_SETUP.md) の手順で AWS CLI を設定し、
-`agent/agentcore/aws-targets.json` の placeholder account を実アカウントへ
-置き換えます。
+デプロイ先ファイルを作って placeholder account を実アカウントへ置き換えます。
+
+```bash
+cp agent/agentcore/aws-targets.example.json agent/agentcore/aws-targets.json
+```
+
+`aws-targets.json` 自体は `.gitignore` に入れてあります（アカウント ID を
+public リポジトリへコミットしないため）。
 
 ```bash
 bun run agent:validate

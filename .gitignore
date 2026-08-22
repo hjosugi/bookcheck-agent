@@ -5,11 +5,13 @@ coverage/
 .env.*
 !.env.local.example
 !.env.production.example
+!agent/app/BookChecker/.env.example
 infra/cdk.out/
 infra/node_modules/
 agent/app/BookChecker/.venv/
 agent/app/BookChecker/.env
 agent/app/BookChecker/__pycache__/
+agent/agentcore/aws-targets.json
 screenshots/
 handson-memo.local.txt
 tsconfig.tsbuildinfo

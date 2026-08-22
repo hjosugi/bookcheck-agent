@@ -11,9 +11,12 @@ app/                         Next.js App Router（Web UI + API）
 agent/
   agentcore/                 AgentCore の宣言設定
   app/BookChecker/           Python / Strands エージェント（uv）
+amplify/                     Cognito 認証（Amplify Gen 2）
 infra/                       DynamoDB と IAM の AWS CDK
 test/                        Web アプリの Vitest
+img/                         HANDSON.md の図
 package.json                 Bun の共通コマンド
+amplify.yml                  Amplify Hosting のビルド定義
 compose.yml                  Docker 用ローカルサービス
 compose.podman.yml           rootless Podman 用ローカルサービス
 ```
@@ -31,7 +34,11 @@ AWS CLI v2 の導入と認証は [AWS_SETUP.md](AWS_SETUP.md) の手順を先に
 bun run setup
 cp .env.local.example .env.local
 cp agent/app/BookChecker/.env.example agent/app/BookChecker/.env
+cp agent/agentcore/aws-targets.example.json agent/agentcore/aws-targets.json
 ```
+
+`.env` と `aws-targets.json` は `.gitignore` に入っています。実際の値は
+コミットされないので、クローンしたら毎回この 3 行を実行してください。
 
 ローカルサービスとアプリを起動します。
 
@@ -68,4 +75,7 @@ DynamoDB テーブルを最初に作るコマンドは [LOCAL_DEV.md](LOCAL_DEV.
 | [agent/app/BookChecker/README.md](agent/app/BookChecker/README.md) | Python エージェントの起動とデプロイ   |
 | [AWS_SETUP.md](AWS_SETUP.md)                                       | AWS CLI、Nova 確認、CDK デプロイ      |
 | [TESTING.md](TESTING.md)                                           | テストの対象と実行方法                |
-| [HANDSON.md](HANDSON.md)                                           | 書籍第13章の再構成手順                |
+| [HANDSON.md](HANDSON.md)                                           | 書籍第13章のハンズオン手順（Phase 1〜8） |
+| [handson-memo.txt](handson-memo.txt)                               | HANDSON 用の値メモテンプレート        |
+| [HANDOFF.md](HANDOFF.md)                                           | 書籍版との差分（強化版フロントの設計） |
+| [infra/README.md](infra/README.md)                                 | CDK スタックの構成                    |

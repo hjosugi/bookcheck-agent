@@ -56,10 +56,20 @@ AgentCore のデプロイ先も設定します。まず account ID を確認し�
 aws sts get-caller-identity --query Account --output text
 ```
 
-`agent/agentcore/aws-targets.json` の `account` に表示された12桁の値を入れます。
-リポジトリ内の `000000000000` は誤デプロイを防ぐためのプレースホルダーです。
+デプロイ先ファイルはテンプレートから作ります。
+
+```bash
+cp agent/agentcore/aws-targets.example.json agent/agentcore/aws-targets.json
+```
+
+`agent/agentcore/aws-targets.json` の `account` に、表示された12桁の値を入れます。
+テンプレート内の `000000000000` は誤デプロイを防ぐためのプレースホルダーです。
 リージョンを変更する場合は、同じファイルの `region` と以下で使う
 `AWS_REGION` を揃えてください。
+
+> `aws-targets.json` は `.gitignore` で追跡対象から外してあります。
+> このリポジトリは public なので、AWS アカウント ID をコミットしないためです。
+> 追跡されるのはプレースホルダー入りの `aws-targets.example.json` だけです。
 
 Codespaces では `aws login --remote` も利用できます。Arch 系以外は
 [AWS 公式の AWS CLI v2 インストール手順](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
