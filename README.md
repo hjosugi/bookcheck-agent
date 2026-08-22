@@ -69,13 +69,13 @@ DynamoDB テーブルを最初に作るコマンドは [LOCAL_DEV.md](LOCAL_DEV.
 
 ## ドキュメント
 
-| ファイル                                                           | 内容                                  |
-| ------------------------------------------------------------------ | ------------------------------------- |
-| [LOCAL_DEV.md](LOCAL_DEV.md)                                       | Docker / Podman でのローカル開発      |
-| [agent/app/BookChecker/README.md](agent/app/BookChecker/README.md) | Python エージェントの起動とデプロイ   |
-| [AWS_SETUP.md](AWS_SETUP.md)                                       | AWS CLI、Nova 確認、CDK デプロイ      |
-| [TESTING.md](TESTING.md)                                           | テストの対象と実行方法                |
+| ファイル                                                           | 内容                                     |
+| ------------------------------------------------------------------ | ---------------------------------------- |
+| [LOCAL_DEV.md](LOCAL_DEV.md)                                       | Docker / Podman でのローカル開発         |
+| [agent/app/BookChecker/README.md](agent/app/BookChecker/README.md) | Python エージェントの起動とデプロイ      |
+| [AWS_SETUP.md](AWS_SETUP.md)                                       | AWS CLI、Nova 確認、CDK デプロイ         |
+| [TESTING.md](TESTING.md)                                           | テストの対象と実行方法                   |
 | [HANDSON.md](HANDSON.md)                                           | 書籍第13章のハンズオン手順（Phase 1〜8） |
-| [handson-memo.txt](handson-memo.txt)                               | HANDSON 用の値メモテンプレート        |
-| [HANDOFF.md](HANDOFF.md)                                           | 書籍版との差分（強化版フロントの設計） |
-| [infra/README.md](infra/README.md)                                 | CDK スタックの構成                    |
+| [handson-memo.txt](handson-memo.txt)                               | HANDSON 用の値メモテンプレート           |
+| [HANDOFF.md](HANDOFF.md)                                           | 書籍版との差分（強化版フロントの設計）   |
+| [infra/README.md](infra/README.md)                                 | CDK スタックの構成                       |
