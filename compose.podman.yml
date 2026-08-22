@@ -6,7 +6,7 @@ services:
     image: docker.io/amazon/dynamodb-local:latest
     container_name: bookchecker-dynamodb
     network_mode: host
-    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/data"]
+    command: ['-jar', 'DynamoDBLocal.jar', '-sharedDb', '-dbPath', '/data']
     volumes:
       - dynamodb-data:/data:Z
 

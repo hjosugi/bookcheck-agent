@@ -1,8 +1,8 @@
-'use client';
+'use client'
 
-import type { ReactNode } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import type { ReactNode } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 // Markdown renderer for assistant bubbles.
 // remark-gfm adds tables, task lists, and strikethrough.
@@ -16,12 +16,12 @@ const components = {
       {children}
     </a>
   ),
-};
+}
 
 export function Markdown({ content }: { content: string }) {
   return (
     <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
       {content}
     </ReactMarkdown>
-  );
+  )
 }

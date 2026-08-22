@@ -9,12 +9,12 @@ bun run infra:test    # infra tests
 
 ## App tests (`test/`, vitest)
 
-| File | Covers |
-|---|---|
-| `rate-limit.test.ts` | token bucket: refill, capacity cap, optimistic locking, race retry, fail-closed |
-| `use-agent-stream.test.ts` | SSE parsing across chunk boundaries, retry policy, URL building |
-| `sessions-api.test.ts` | Route Handlers: ownership isolation, ordering, validation, titling |
-| `keys-and-auth.test.ts` | key construction (this is the authorization model), local-auth mode |
+| File                       | Covers                                                                          |
+| -------------------------- | ------------------------------------------------------------------------------- |
+| `rate-limit.test.ts`       | token bucket: refill, capacity cap, optimistic locking, race retry, fail-closed |
+| `use-agent-stream.test.ts` | SSE parsing across chunk boundaries, retry policy, URL building                 |
+| `sessions-api.test.ts`     | Route Handlers: ownership isolation, ordering, validation, titling              |
+| `keys-and-auth.test.ts`    | key construction (this is the authorization model), local-auth mode             |
 
 DynamoDB is mocked with `aws-sdk-client-mock`, so the tests assert
 the exact commands sent, not just the return values. That is how

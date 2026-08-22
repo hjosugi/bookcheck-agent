@@ -1,8 +1,8 @@
-'use client';
+'use client'
 
-import type { ReactNode } from 'react';
-import { LOCAL_AUTH } from './lib/auth-token';
-import { AuthProvider as CognitoAuthProvider } from './providers';
+import type { ReactNode } from 'react'
+import { LOCAL_AUTH } from './lib/auth-token'
+import { AuthProvider as CognitoAuthProvider } from './providers'
 
 // Chooses the auth wrapper at runtime.
 //
@@ -22,7 +22,7 @@ export function AppAuthProvider({ children }: { children: ReactNode }) {
         <div className="local-badge">LOCAL MODE — auth disabled</div>
         {children}
       </>
-    );
+    )
   }
-  return <CognitoAuthProvider>{children}</CognitoAuthProvider>;
+  return <CognitoAuthProvider>{children}</CognitoAuthProvider>
 }

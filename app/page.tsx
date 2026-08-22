@@ -1,92 +1,92 @@
-'use client';
+'use client'
 
-import { useState, useEffect, useCallback } from 'react';
-import { getAuthToken } from './lib/auth-token';
-import { Sidebar, type SessionSummary } from './components/sidebar';
-import { Chat } from './components/chat';
+import { useState, useEffect, useCallback } from 'react'
+import { getAuthToken } from './lib/auth-token'
+import { Sidebar, type SessionSummary } from './components/sidebar'
+import { Chat } from './components/chat'
 
 // Shell page. Holds the session list and the active session.
 // The Chat component owns messages and streaming.
 
 async function authedFetch(path: string, init?: RequestInit) {
-  const token = await getAuthToken();
+  const token = await getAuthToken()
   return fetch(path, {
     ...init,
     headers: { ...init?.headers, Authorization: `Bearer ${token}` },
-  });
+  })
 }
 
 export default function Page() {
-  const [sessions, setSessions] = useState<SessionSummary[]>([]);
-  const [activeId, setActiveId] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sessions, setSessions] = useState<SessionSummary[]>([])
+  const [activeId, setActiveId] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   // Fetch only. The caller decides what to do with the result.
   const fetchSessions = useCallback(async (): Promise<SessionSummary[]> => {
     try {
-      const res = await authedFetch('/api/sessions');
-      if (!res.ok) return [];
-      const data = (await res.json()) as { sessions: SessionSummary[] };
-      return data.sessions;
+      const res = await authedFetch('/api/sessions')
+      if (!res.ok) return []
+      const data = (await res.json()) as { sessions: SessionSummary[] }
+      return data.sessions
     } catch {
       // The sidebar is not critical. Keep the chat usable.
-      return [];
+      return []
     }
-  }, []);
+  }, [])
 
   // Used after a message is saved, so the order and titles stay right.
   const refreshSessions = useCallback(async () => {
-    setSessions(await fetchSessions());
-  }, [fetchSessions]);
+    setSessions(await fetchSessions())
+  }, [fetchSessions])
 
   // Load the session list once on mount. This synchronizes with an
   // external system (the API), which is what effects are for.
   useEffect(() => {
-    let cancelled = false;
+    let cancelled = false
     void (async () => {
-      const list = await fetchSessions();
-      if (!cancelled) setSessions(list);
-    })();
+      const list = await fetchSessions()
+      if (!cancelled) setSessions(list)
+    })()
     return () => {
-      cancelled = true;
-    };
-  }, [fetchSessions]);
+      cancelled = true
+    }
+  }, [fetchSessions])
 
   const createSession = useCallback(async (): Promise<SessionSummary> => {
-    const res = await authedFetch('/api/sessions', { method: 'POST' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = (await res.json()) as { session: SessionSummary };
-    setSessions((prev) => [data.session, ...prev]);
-    setActiveId(data.session.sessionId);
-    return data.session;
-  }, []);
+    const res = await authedFetch('/api/sessions', { method: 'POST' })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = (await res.json()) as { session: SessionSummary }
+    setSessions((prev) => [data.session, ...prev])
+    setActiveId(data.session.sessionId)
+    return data.session
+  }, [])
 
   const handleNew = async () => {
     // A new chat starts empty. The session row is created on
     // the first message, not here. This avoids empty sessions.
-    setActiveId(null);
-    setSidebarOpen(false);
-  };
+    setActiveId(null)
+    setSidebarOpen(false)
+  }
 
   const handleSelect = (id: string) => {
-    setActiveId(id);
-    setSidebarOpen(false);
-  };
+    setActiveId(id)
+    setSidebarOpen(false)
+  }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('このチャットを削除しますか?')) return;
-    setBusy(true);
+    if (!confirm('このチャットを削除しますか?')) return
+    setBusy(true)
     try {
-      await authedFetch(`/api/sessions/${id}`, { method: 'DELETE' });
-      setSessions((prev) => prev.filter((s) => s.sessionId !== id));
-      if (activeId === id) setActiveId(null);
+      await authedFetch(`/api/sessions/${id}`, { method: 'DELETE' })
+      setSessions((prev) => prev.filter((s) => s.sessionId !== id))
+      if (activeId === id) setActiveId(null)
     } finally {
-      setBusy(false);
+      setBusy(false)
     }
-  };
+  }
 
-  const activeSession = sessions.find((s) => s.sessionId === activeId) ?? null;
+  const activeSession = sessions.find((s) => s.sessionId === activeId) ?? null
 
   return (
     <div className="shell">
@@ -118,5 +118,5 @@ export default function Page() {
         />
       </main>
     </div>
-  );
+  )
 }

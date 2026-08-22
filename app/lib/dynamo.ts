@@ -1,5 +1,5 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 
 // Single-table design.
 //
@@ -17,22 +17,22 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 // Local development uses DynamoDB Local (docker-compose).
 // Set DYNAMO_ENDPOINT to switch. Credentials are dummy values
 // because DynamoDB Local does not check them.
-const endpoint = process.env.DYNAMO_ENDPOINT;
+const endpoint = process.env.DYNAMO_ENDPOINT
 
 const localOptions = endpoint
   ? { endpoint, credentials: { accessKeyId: 'local', secretAccessKey: 'local' } }
-  : undefined;
+  : undefined
 
 const client = new DynamoDBClient({
   region: process.env.AWS_REGION ?? 'us-east-1',
   ...localOptions,
-});
+})
 
 export const ddb = DynamoDBDocumentClient.from(client, {
   marshallOptions: { removeUndefinedValues: true },
-});
+})
 
-export const TABLE = process.env.DYNAMO_TABLE_NAME ?? 'bookchecker-app';
+export const TABLE = process.env.DYNAMO_TABLE_NAME ?? 'bookchecker-app'
 
 export const keys = {
   userPk: (sub: string) => `USER#${sub}`,
@@ -41,23 +41,23 @@ export const keys = {
   // Time-ordered sort key. Padded so string order equals time order.
   messageSk: () => `MSG#${String(Date.now()).padStart(14, '0')}#${crypto.randomUUID().slice(0, 8)}`,
   rateSk: () => 'RATE',
-};
+}
 
 export interface SessionItem {
-  PK: string;
-  SK: string;
-  sessionId: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
+  PK: string
+  SK: string
+  sessionId: string
+  title: string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface MessageItem {
-  PK: string;
-  SK: string;
-  role: 'user' | 'assistant';
-  content: string;
+  PK: string
+  SK: string
+  role: 'user' | 'assistant'
+  content: string
   // 'partial' marks an assistant message cut off by a network error.
-  kind?: 'normal' | 'partial';
-  createdAt: string;
+  kind?: 'normal' | 'partial'
+  createdAt: string
 }

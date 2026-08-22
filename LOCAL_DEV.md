@@ -116,13 +116,9 @@ aws dynamodb wait table-not-exists \
 
 ## 5. Python エージェント
 
-2つ目のターミナルで環境変数を読み込み、起動します。
+2つ目のターミナルで起動します（`.env` の環境変数は `uv run --env-file` で自動読み込みされます）。
 
 ```bash
-set -a
-source agent/app/BookChecker/.env
-set +a
-aws sts get-caller-identity
 bun run agent:local
 ```
 
@@ -177,10 +173,10 @@ bun run lint
 
 ## トラブルシューティング
 
-| 症状 | 確認 |
-|---|---|
+| 症状                                | 確認                                                           |
+| ----------------------------------- | -------------------------------------------------------------- |
 | Podman が short-name を解決できない | `bun run dcc:up` を使い、`compose.podman.yml` が選ばれているか |
-| `/api/sessions` が 401 | `.env.local` の `LOCAL_AUTH=1` を確認して Next.js を再起動 |
-| `ResourceNotFoundException` | この文書の `create-table` を実行 |
-| Agent が起動しない | `aws sts get-caller-identity` と `.env` のモデル ID を確認 |
-| Bedrock が `AccessDeniedException` | [AWS_SETUP.md](AWS_SETUP.md) の Nova 一覧と IAM 権限を確認 |
+| `/api/sessions` が 401              | `.env.local` の `LOCAL_AUTH=1` を確認して Next.js を再起動     |
+| `ResourceNotFoundException`         | この文書の `create-table` を実行                               |
+| Agent が起動しない                  | `aws sts get-caller-identity` と `.env` のモデル ID を確認     |
+| Bedrock が `AccessDeniedException`  | [AWS_SETUP.md](AWS_SETUP.md) の Nova 一覧と IAM 権限を確認     |

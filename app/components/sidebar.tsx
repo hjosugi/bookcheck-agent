@@ -1,21 +1,21 @@
-'use client';
+'use client'
 
 // Session list. New chat, select, delete.
 // On small screens the parent toggles visibility.
 
 export interface SessionSummary {
-  sessionId: string;
-  title: string;
-  updatedAt: string;
+  sessionId: string
+  title: string
+  updatedAt: string
 }
 
 interface Props {
-  sessions: SessionSummary[];
-  activeId: string | null;
-  busy: boolean;
-  onNew: () => void;
-  onSelect: (id: string) => void;
-  onDelete: (id: string) => void;
+  sessions: SessionSummary[]
+  activeId: string | null
+  busy: boolean
+  onNew: () => void
+  onSelect: (id: string) => void
+  onDelete: (id: string) => void
 }
 
 export function Sidebar({ sessions, activeId, busy, onNew, onSelect, onDelete }: Props) {
@@ -52,5 +52,5 @@ export function Sidebar({ sessions, activeId, busy, onNew, onSelect, onDelete }:
         ))}
       </nav>
     </aside>
-  );
+  )
 }

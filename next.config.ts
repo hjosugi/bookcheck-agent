@@ -1,4 +1,4 @@
-import type { NextConfig } from 'next';
+import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   async rewrites() {
@@ -7,8 +7,8 @@ const nextConfig: NextConfig = {
         source: '/local-agent/:path*',
         destination: 'http://127.0.0.1:8080/:path*',
       },
-    ];
+    ]
   },
-};
+}
 
-export default nextConfig;
+export default nextConfig

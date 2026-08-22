@@ -6,10 +6,10 @@ and `prod`, live side by side in one account.
 
 ## What the stack creates
 
-| Resource | Why |
-|---|---|
-| DynamoDB table (`PK`/`SK`, on-demand, TTL on `expiresAt`) | sessions, messages, rate buckets |
-| IAM managed policy | exactly the six DynamoDB actions the Route Handlers call |
+| Resource                                                  | Why                                                      |
+| --------------------------------------------------------- | -------------------------------------------------------- |
+| DynamoDB table (`PK`/`SK`, on-demand, TTL on `expiresAt`) | sessions, messages, rate buckets                         |
+| IAM managed policy                                        | exactly the six DynamoDB actions the Route Handlers call |
 
 It deliberately does NOT create the AgentCore runtime, the
 Amplify app, or Cognito. Those come from the book's hands-on, so
@@ -17,12 +17,12 @@ this stack can be deployed and destroyed without touching them.
 
 ## Environment differences
 
-| | dev | prod |
-|---|---|---|
-| Table name | `bookchecker-app-dev` | `bookchecker-app` |
-| On stack delete | table is deleted | table is retained |
-| Point-in-time recovery | off | on |
-| Session TTL policy | 7 days | 90 days |
+|                        | dev                   | prod              |
+| ---------------------- | --------------------- | ----------------- |
+| Table name             | `bookchecker-app-dev` | `bookchecker-app` |
+| On stack delete        | table is deleted      | table is retained |
+| Point-in-time recovery | off                   | on                |
+| Session TTL policy     | 7 days                | 90 days           |
 
 The whole difference lives in `infra/lib/env-config.ts`. Change
 it there, not in the stack.
@@ -58,8 +58,9 @@ Check the installed tools and the AWS identity:
 
 ```bash
 node --version
-npm --version
-docker --version
+bun --version
+uv --version
+(podman --version || docker --version)
 aws --version
 
 export AWS_REGION=us-east-1
@@ -134,10 +135,10 @@ or re-run with the name.
 
 Copy the stack outputs into the right place:
 
-| Output | dev | prod |
-|---|---|---|
-| `TableName` | `.env.local` -> `DYNAMO_TABLE_NAME` | Amplify env var |
-| `TableAccessPolicyArn` | not needed locally | attach to the SSR role |
+| Output                 | dev                                 | prod                   |
+| ---------------------- | ----------------------------------- | ---------------------- |
+| `TableName`            | `.env.local` -> `DYNAMO_TABLE_NAME` | Amplify env var        |
+| `TableAccessPolicyArn` | not needed locally                  | attach to the SSR role |
 
 See `.env.production.example` for the full production variable list.
 

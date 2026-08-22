@@ -42,15 +42,15 @@ Phase 5 の後（Web アプリが表示される状態）で区切ると再開�
 
 ![値の対応マップ](img/02-value-map.svg)
 
-| # | 値 | 生まれる場所 | 使う場所 | 自分の値 |
-|---|---|---|---|---|
-| 1 | クレデンシャルプロバイダー名 | Phase 1 (13.2.1) | ランタイム環境変数 | |
-| 2 | ランタイム ARN | Phase 3 → 13.4.5 でコピー | Amplify 環境変数 / CLI | |
-| 3 | ランタイム ID | ARN の `runtime/` 以降 | ワークロードID 更新 CLI | |
-| 4 | Amplify ドメイン URL | Phase 5 (13.4.6) | コールバック URL の材料 | |
-| 5 | コールバック URL | #4 + `/api/oauth2/callback` | **2か所**に設定 | |
-| 6 | Cognito ユーザープール ID | Phase 5 (13.4.6) | 検出 URL に埋め込む | |
-| 7 | Cognito クライアント ID | Phase 5 (13.4.6) | 許可されたクライアント | |
+| #   | 値                           | 生まれる場所                | 使う場所                | 自分の値 |
+| --- | ---------------------------- | --------------------------- | ----------------------- | -------- |
+| 1   | クレデンシャルプロバイダー名 | Phase 1 (13.2.1)            | ランタイム環境変数      |          |
+| 2   | ランタイム ARN               | Phase 3 → 13.4.5 でコピー   | Amplify 環境変数 / CLI  |          |
+| 3   | ランタイム ID                | ARN の `runtime/` 以降      | ワークロードID 更新 CLI |          |
+| 4   | Amplify ドメイン URL         | Phase 5 (13.4.6)            | コールバック URL の材料 |          |
+| 5   | コールバック URL             | #4 + `/api/oauth2/callback` | **2か所**に設定         |          |
+| 6   | Cognito ユーザープール ID    | Phase 5 (13.4.6)            | 検出 URL に埋め込む     |          |
+| 7   | Cognito クライアント ID      | Phase 5 (13.4.6)            | 許可されたクライアント  |          |
 
 センシティブな値なので、GitHub には絶対にプッシュしないでください。
 
@@ -67,43 +67,39 @@ Amplify 公式の Next.js テンプレートから、自分の GitHub リポジ�
 作成できたら `Code` → `Codespaces` → `Create codespace on main` でコードスペースを起動します。
 起動直後は初期設定が裏で走っています。「Finished configuring codespace」と出るまで待ってから作業を始めてください。
 
-### 2-2. CLI を入れる
+### 2-2. CLI を用意する
 
 ```bash
-# agent ディレクトリを Git 追跡から外す（Amplify のデプロイに含めないため）
-printf '\nagent/\n' >> .gitignore
-
-# AgentCore CLI をインストール
-npm install -g @aws/agentcore@latest
+# リポジトリルートで、AgentCore CLI を含む依存関係を導入
+bun install
+bunx agentcore --version
 ```
 
-> **本と違う点**: 書籍はバージョン固定で `@aws/agentcore@1.0.0-preview.8` を指定していますが、
-> 著者リポジトリの README が 2026/8/14 に `@latest` へ更新されています。CDK のアップデートに伴うエラー回避のためです。
-> 必ず `chapter13/README.md` の最新版を確認してください。
-> なお 2026/8/20 時点で `latest` タグは `0.27.1`、`preview` タグは `1.0.0-preview.27` を指しています。
-> インストール後に `agentcore --version` で実際に入ったバージョンを控えておくと、後で問題を切り分けやすいです。
+このモノレポは `package.json` に AgentCore CLI のバージョンを固定しているため、
+グローバルインストールは不要です。`agent/` もデプロイ対象なので Git 追跡から
+除外しません。AWS CLI の導入だけは [AWS_SETUP.md](AWS_SETUP.md) の手順で行います。
 
 ### 2-3. プロジェクトを作る
 
 ```bash
-agentcore create
+bunx agentcore create
 ```
 
 対話形式の TUI で聞かれます。以下のとおり答えます。
 
-| 設問 | 答え |
-|---|---|
-| Project name | `agent` |
-| What would you like to build? | Agent |
-| Agent name | `BookChecker` |
-| Select agent type | Create new agent |
-| Language | Python |
-| Build | **Container** |
-| Protocol | HTTP |
-| Framework | Strands Agents SDK |
-| Model | Amazon Bedrock |
-| Memory | **Long-term and short-term** |
-| Customize advanced settings | 何もチェックせず Enter |
+| 設問                          | 答え                         |
+| ----------------------------- | ---------------------------- |
+| Project name                  | `agent`                      |
+| What would you like to build? | Agent                        |
+| Agent name                    | `BookChecker`                |
+| Select agent type             | Create new agent             |
+| Language                      | Python                       |
+| Build                         | **Container**                |
+| Protocol                      | HTTP                         |
+| Framework                     | Strands Agents SDK           |
+| Model                         | Amazon Bedrock               |
+| Memory                        | **Long-term and short-term** |
+| Customize advanced settings   | 何もチェックせず Enter       |
 
 太字の 2 つには理由があります。
 
@@ -123,12 +119,12 @@ cd agent/app/BookChecker
 uv add requests==2.33.1 strands-agents-tools==0.5.1 playwright==1.58.0 nest-asyncio==1.6.0
 ```
 
-| パッケージ | 役割 |
-|---|---|
-| requests | Google Calendar API への HTTP 送信 |
+| パッケージ           | 役割                                               |
+| -------------------- | -------------------------------------------------- |
+| requests             | Google Calendar API への HTTP 送信                 |
 | strands-agents-tools | AgentCore ビルトインのブラウザツールを含むツール集 |
-| playwright | ブラウザ操作エンジン（ブラウザツールが内部利用） |
-| nest-asyncio | 非同期処理（ブラウザツールが内部利用） |
+| playwright           | ブラウザ操作エンジン（ブラウザツールが内部利用）   |
+| nest-asyncio         | 非同期処理（ブラウザツールが内部利用）             |
 
 ### 2b-2. カレンダー登録ツール
 
@@ -169,8 +165,9 @@ touch calendar_tool.py
 ## Phase 3　バックエンドのデプロイ（13.3.5）
 
 ```bash
-cd /workspaces/bookchecker/agent
-agentcore deploy
+cd /workspaces/bookchecker
+bun run agent:validate
+bun run agent:deploy
 ```
 
 - 「CDK bootstrapping required」と出たら Enter を押します（この AWS アカウントで CDK 初回利用のため）
@@ -195,22 +192,23 @@ cd /workspaces/bookchecker
 # サンプルの DB 連携は使わないので削除
 rm -rf amplify/data
 
-npm install next@16.2.4 react@19.2.5 react-dom@19.2.5 @aws-amplify/ui-react@6.15.3 react-markdown@10.1.0 @aws-sdk/client-bedrock-agentcore@3.1037.0
+# ルート package.json と bun.lock に固定された依存関係を導入
+bun install --frozen-lockfile
 ```
 
 その前に `amplify/backend.ts` を編集して、`data` に関する 2 行を消し `auth` だけ残します。
 
-`npm install` で脆弱性の警告が出ることがあります。書籍によれば、これは Amplify Gen2 の開発補助ツールが内部で使うパッケージ由来で、
+依存関係の監査で警告が出ることがあります。書籍によれば、これは Amplify Gen2 の開発補助ツールが内部で使うパッケージ由来で、
 デプロイされる Web アプリには含まれません。ただし出版後に状況は変わるので、内容は自分で確認してください。
 
 ### 4-2. フロントエンドの 4 ファイル
 
-| ファイル | 作業 | 役割 |
-|---|---|---|
+| ファイル            | 作業     | 役割                           |
+| ------------------- | -------- | ------------------------------ |
 | `app/providers.tsx` | 新規作成 | Amplify 初期化と認証の共通設定 |
-| `app/layout.tsx` | 書き換え | 全ページ共通レイアウト |
-| `app/page.tsx` | 書き換え | チャット画面のメイン UI |
-| `app/globals.css` | 書き換え | 見た目 |
+| `app/layout.tsx`    | 書き換え | 全ページ共通レイアウト         |
+| `app/page.tsx`      | 書き換え | チャット画面のメイン UI        |
+| `app/globals.css`   | 書き換え | 見た目                         |
 
 ```bash
 touch app/providers.tsx
@@ -289,8 +287,8 @@ AWS Amplify を開き、バージニア北部にいることを確認して「�
 6. 「詳細設定」を開いて環境変数を追加（下表）
 7. 「保存してデプロイ」
 
-| キー | 値 |
-|---|---|
+| キー                    | 値                       |
+| ----------------------- | ------------------------ |
 | `NEXT_PUBLIC_AGENT_ARN` | メモ #2 のランタイム ARN |
 
 Next.js プロジェクトが検出され、SSR モードでビルドが始まります。`main` ブランチが「デプロイ済み」になるまで 6〜7 分待ちます。
@@ -352,18 +350,18 @@ AgentCore コンソール →「ランタイム」→ `agent_BookChecker` →「
 
 「高度な設定」を開き、環境変数を 3 つ追加します（既存の変数は消さない）。
 
-| 変数名 | 値 |
-|---|---|
-| `CALLBACK_URL` | メモ #5 のコールバック URL |
+| 変数名                     | 値                                     |
+| -------------------------- | -------------------------------------- |
+| `CALLBACK_URL`             | メモ #5 のコールバック URL             |
 | `CREDENTIAL_PROVIDER_NAME` | メモ #1 のクレデンシャルプロバイダー名 |
-| `AWS_DEFAULT_REGION` | `us-east-1` |
+| `AWS_DEFAULT_REGION`       | `us-east-1`                            |
 
 続いて「インバウンド認証」セクションで「JSON Web Tokens (JWT) を使用」を選び、以下を設定します。
 
-| 項目 | 値 |
-|---|---|
-| 検出 URL | `https://cognito-idp.us-east-1.amazonaws.com/<メモ#6>/.well-known/openid-configuration` |
-| 許可されたクライアント | メモ #7 のクライアント ID（「クライアントを追加」ボタンから） |
+| 項目                   | 値                                                                                      |
+| ---------------------- | --------------------------------------------------------------------------------------- |
+| 検出 URL               | `https://cognito-idp.us-east-1.amazonaws.com/<メモ#6>/.well-known/openid-configuration` |
+| 許可されたクライアント | メモ #7 のクライアント ID（「クライアントを追加」ボタンから）                           |
 
 これで Cognito でログインしたユーザーだけがエージェントを呼べます。
 設定できたら右下の「ホストエージェント/ツール」で再デプロイします。
@@ -407,15 +405,15 @@ Amplify のドメイン URL にアクセスします。
 
 期待される動き。
 
-| # | 起きること |
-|---|---|
-| 1 | ブラウザツールで新刊カレンダーにアクセスし、PC/IT 書籍でフィルタ |
-| 2 | 技術書をピックアップして、登録してよいか確認してくる |
-| 3 | 「はい」と答えると Google 連携ボタンが表示される |
-| 4 | ボタンから Google 認可へ。「確認されていません」警告は「続行」 |
-| 5 | 連携完了のページが出たらタブを閉じてチャットに戻る |
-| 6 | エージェントが自動でカレンダー登録を続行し、完了メッセージが出る |
-| 7 | Google カレンダーに実際に予定が入っている |
+| #   | 起きること                                                       |
+| --- | ---------------------------------------------------------------- |
+| 1   | ブラウザツールで新刊カレンダーにアクセスし、PC/IT 書籍でフィルタ |
+| 2   | 技術書をピックアップして、登録してよいか確認してくる             |
+| 3   | 「はい」と答えると Google 連携ボタンが表示される                 |
+| 4   | ボタンから Google 認可へ。「確認されていません」警告は「続行」   |
+| 5   | 連携完了のページが出たらタブを閉じてチャットに戻る               |
+| 6   | エージェントが自動でカレンダー登録を続行し、完了メッセージが出る |
+| 7   | Google カレンダーに実際に予定が入っている                        |
 
 ### メモリーの動作も試す
 
@@ -469,12 +467,12 @@ CloudWatch Logs のロググループ・CodeBuild プロジェクトは残りま
 
 手順の抜けか、入力値の誤字です。前から順に見直すのが結局いちばん速いです。
 
-| 症状 | 確認する場所 |
-|---|---|
-| 「考え中…」のまま応答が来ない | Amplify (Phase 5) と ランタイム (6-2) の両方で環境変数が正しいか。JWT 認証のユーザープール ID・クライアント ID がメモ #6 #7 と一致しているか |
-| エージェントがブラウザを使えない | ランタイムの実行ロール (5-2) に `AmazonBedrockFullAccess` と `BedrockAgentCoreFullAccess` が付いているか |
-| Google 連携に失敗する | コールバック URL (メモ #5) が、ランタイム環境変数とワークロード ID の**2か所**に同じ値で入っているか |
-| ビルドが失敗する | Amplify コンソールで `main` ブランチのカードを開き、「ビルド」「デプロイ」セクションのログを確認 |
+| 症状                             | 確認する場所                                                                                                                                 |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 「考え中…」のまま応答が来ない    | Amplify (Phase 5) と ランタイム (6-2) の両方で環境変数が正しいか。JWT 認証のユーザープール ID・クライアント ID がメモ #6 #7 と一致しているか |
+| エージェントがブラウザを使えない | ランタイムの実行ロール (5-2) に `AmazonBedrockFullAccess` と `BedrockAgentCoreFullAccess` が付いているか                                     |
+| Google 連携に失敗する            | コールバック URL (メモ #5) が、ランタイム環境変数とワークロード ID の**2か所**に同じ値で入っているか                                         |
+| ビルドが失敗する                 | Amplify コンソールで `main` ブランチのカードを開き、「ビルド」「デプロイ」セクションのログを確認                                             |
 
 ### ★ 再デプロイ時の落とし穴
 

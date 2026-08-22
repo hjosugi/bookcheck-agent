@@ -9,9 +9,6 @@ Amazon Nova Pro を利用する Strands / AgentCore エージェントです。
 ```bash
 cp agent/app/BookChecker/.env.example agent/app/BookChecker/.env
 bun run agent:sync
-set -a
-source agent/app/BookChecker/.env
-set +a
 bun run agent:local
 ```
 

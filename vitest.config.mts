@@ -1,4 +1,4 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vitest/config'
 
 // Tests run in local-auth mode so they never need Cognito.
 // NODE_ENV stays "test", which is not "production", so the
@@ -19,4 +19,4 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
     },
   },
-});
+})

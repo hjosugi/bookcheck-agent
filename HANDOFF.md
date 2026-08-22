@@ -52,13 +52,14 @@ See "Extension" below. This tradeoff is good interview material.
 
 Single-table design. Ownership lives in the partition key.
 
-| Item     | PK                       | SK                  |
-|----------|--------------------------|---------------------|
-| Session  | `USER#{sub}`             | `SESSION#{id}`      |
-| Message  | `USER#{sub}#S#{id}`      | `MSG#{ts}#{rand}`   |
-| Bucket   | `USER#{sub}`             | `RATE`              |
+| Item    | PK                  | SK                |
+| ------- | ------------------- | ----------------- |
+| Session | `USER#{sub}`        | `SESSION#{id}`    |
+| Message | `USER#{sub}#S#{id}` | `MSG#{ts}#{rand}` |
+| Bucket  | `USER#{sub}`        | `RATE`            |
 
 Access patterns:
+
 - List sessions: Query PK = `USER#{sub}`, SK begins_with `SESSION#`
 - Load history: Query PK = `USER#{sub}#S#{id}`, ascending
 - Rate check: Get + conditional Put on the bucket item
@@ -68,9 +69,10 @@ review, deploy, and teardown procedure is in `AWS_SETUP.md`; the
 environment-specific deploy commands are:
 
 ```bash
+bun run infra:synth:dev
 cd infra
-npx cdk deploy -c env=dev --require-approval any-change
-npx cdk deploy -c env=prod -c ssrRoleName=bookchecker-ssr-role --require-approval any-change
+bunx cdk deploy -c env=dev --require-approval any-change
+bunx cdk deploy -c env=prod -c ssrRoleName=bookchecker-ssr-role --require-approval any-change
 ```
 
 The stack also creates the least-privilege IAM policy and, when
@@ -123,12 +125,12 @@ Attach this inline policy to `bookchecker-ssr-role`
 
 Add these in the Amplify console. Keep the existing ones.
 
-| Key                    | Value                                  |
-|------------------------|----------------------------------------|
-| `DYNAMO_TABLE_NAME`    | `bookchecker-app`                      |
-| `COGNITO_USER_POOL_ID` | User pool ID from book 13.4.6          |
-| `COGNITO_CLIENT_ID`    | App client ID from book 13.4.6         |
-| `AWS_REGION`           | `us-east-1` (usually set already)      |
+| Key                    | Value                             |
+| ---------------------- | --------------------------------- |
+| `DYNAMO_TABLE_NAME`    | `bookchecker-app`                 |
+| `COGNITO_USER_POOL_ID` | User pool ID from book 13.4.6     |
+| `COGNITO_CLIENT_ID`    | App client ID from book 13.4.6    |
+| `AWS_REGION`           | `us-east-1` (usually set already) |
 
 Note: Amplify Hosting must expose these to SSR. If a variable
 does not reach the server, add it to `amplify.yml` as an env
@@ -179,10 +181,10 @@ package.json bun.lock       <- monorepo commands + JS lockfile
 Then make two edits in `app/layout.tsx`:
 
 ```ts
-import './enhanced.css';                              // add
-import { AppAuthProvider } from './auth-provider';    // add
+import './enhanced.css' // add
+import { AppAuthProvider } from './auth-provider' // add
 // ...
-<AppAuthProvider>{children}</AppAuthProvider>         // replaces <AuthProvider>
+;<AppAuthProvider>{ children } < /AppAuthProvider>         / / replaces<AuthProvider>
 ```
 
 `AppAuthProvider` uses the book's `providers.tsx` in cloud mode and

@@ -2,10 +2,6 @@
   "name": "bookcheck-agent",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "bun@1.4.0",
-  "engines": {
-    "node": ">=20.9.0"
-  },
   "workspaces": [
     "infra"
   ],
@@ -32,14 +28,14 @@
     "dcc:ps": "bun run dc:ps",
     "dcc:logs": "bun run dc:logs",
     "agent:sync": "cd agent/app/BookChecker && uv sync",
-    "agent:local": "cd agent/app/BookChecker && uv run main.py",
+    "agent:local": "cd agent/app/BookChecker && uv run --env-file .env main.py",
     "agent:validate": "cd agent && agentcore validate",
     "agent:dev": "cd agent && agentcore dev",
     "agent:deploy": "cd agent && agentcore deploy",
     "agent:status": "cd agent && agentcore status",
-    "infra:test": "bun --cwd infra test",
-    "infra:typecheck": "bun --cwd infra run typecheck",
-    "infra:synth:dev": "bun --cwd infra run synth:dev",
+    "infra:test": "bun run --cwd infra test",
+    "infra:typecheck": "bun run --cwd infra typecheck",
+    "infra:synth:dev": "bun run --cwd infra synth:dev",
     "infra:check": "bun run infra:typecheck && bun run infra:test"
   },
   "dependencies": {
@@ -73,5 +69,9 @@
     "tsx": "4.23.12",
     "typescript": "5.9.3",
     "vitest": "4.1.11"
-  }
+  },
+  "engines": {
+    "node": ">=20.9.0"
+  },
+  "packageManager": "bun@1.4.0"
 }

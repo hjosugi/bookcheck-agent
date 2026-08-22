@@ -7,8 +7,5 @@
     "editor.defaultFormatter": "oxc.oxc-vscode",
     "editor.formatOnSave": true,
     "editor.formatOnSaveMode": "file"
-  },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features"
   }
 }

@@ -4,9 +4,9 @@ services:
     # unqualified-search registries are configured.
     image: docker.io/amazon/dynamodb-local:latest
     container_name: bookchecker-dynamodb
-    command: [ "-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/data" ]
+    command: ['-jar', 'DynamoDBLocal.jar', '-sharedDb', '-dbPath', '/data']
     ports:
-      - "8000:8000"
+      - '8000:8000'
     volumes:
       # Z gives the volume a private SELinux label on Podman hosts and
       # is also accepted by Docker on Linux.
@@ -21,7 +21,7 @@ services:
       AWS_ACCESS_KEY_ID: local
       AWS_SECRET_ACCESS_KEY: local
     ports:
-      - "8001:8001"
+      - '8001:8001'
     depends_on:
       - dynamodb
 

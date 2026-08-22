@@ -46,15 +46,15 @@ DynamoDB テーブルを最初に作るコマンドは [LOCAL_DEV.md](LOCAL_DEV.
 
 ## 主なコマンド
 
-| コマンド | 内容 |
-|---|---|
-| `bun run setup` | Bun workspace と Python uv 環境をセットアップ |
+| コマンド                      | 内容                                                 |
+| ----------------------------- | ---------------------------------------------------- |
+| `bun run setup`               | Bun workspace と Python uv 環境をセットアップ        |
 | `bun run dcc:up` / `dcc:down` | Docker または Podman のローカルサービスを起動 / 停止 |
-| `bun run dev` | Next.js をローカル起動 |
-| `bun run agent:local` | Python エージェントをポート 8080 で起動 |
-| `bun run agent:validate` | AgentCore 設定を検証 |
-| `bun run agent:deploy` | ローカルの Python コードを AgentCore へデプロイ |
-| `bun run check` | format、lint、型検査、Web/infra テスト |
+| `bun run dev`                 | Next.js をローカル起動                               |
+| `bun run agent:local`         | Python エージェントをポート 8080 で起動              |
+| `bun run agent:validate`      | AgentCore 設定を検証                                 |
+| `bun run agent:deploy`        | ローカルの Python コードを AgentCore へデプロイ      |
+| `bun run check`               | format、lint、型検査、Web/infra テスト               |
 
 エージェントの既定モデルは Amazon Nova Pro
 `us.amazon.nova-pro-v1:0` です。変更する場合は
@@ -62,10 +62,11 @@ DynamoDB テーブルを最初に作るコマンドは [LOCAL_DEV.md](LOCAL_DEV.
 
 ## ドキュメント
 
-| ファイル | 内容 |
-|---|---|
-| [LOCAL_DEV.md](LOCAL_DEV.md) | Docker / Podman でのローカル開発 |
-| [agent/app/BookChecker/README.md](agent/app/BookChecker/README.md) | Python エージェントの起動とデプロイ |
-| [AWS_SETUP.md](AWS_SETUP.md) | AWS CLI、Nova 確認、CDK デプロイ |
-| [TESTING.md](TESTING.md) | テストの対象と実行方法 |
-| [HANDSON.md](HANDSON.md) | 書籍第13章の再構成手順 |
+| ファイル                                                           | 内容                                  |
+| ------------------------------------------------------------------ | ------------------------------------- |
+| [LOCAL_DEV.md](LOCAL_DEV.md)                                       | Docker / Podman でのローカル開発      |
+| [agent/app/BookChecker/README.md](agent/app/BookChecker/README.md) | Python エージェントの起動とデプロイ   |
+| [AWS_SETUP.md](AWS_SETUP.md)                                       | AWS CLI、Nova 確認、CDK デプロイ      |
+| [TESTING.md](TESTING.md)                                           | テストの対象と実行方法                |
+| [HANDSON.md](HANDSON.md)                                           | 書籍第13章の再構成手順                |
+| [screenshots/OCR.md](screenshots/OCR.md)                           | 書籍写真をページ順に整理したOCRノート |

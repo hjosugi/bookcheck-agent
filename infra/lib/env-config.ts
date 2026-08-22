@@ -1,24 +1,24 @@
-import type { RemovalPolicy } from 'aws-cdk-lib';
-import { RemovalPolicy as Removal } from 'aws-cdk-lib';
+import type { RemovalPolicy } from 'aws-cdk-lib'
+import { RemovalPolicy as Removal } from 'aws-cdk-lib'
 
 // One place that defines how each environment differs.
 // Everything else in the stack reads from here.
 
-export type EnvName = 'dev' | 'prod';
+export type EnvName = 'dev' | 'prod'
 
 export interface EnvConfig {
-  name: EnvName;
+  name: EnvName
   // Resource names are suffixed so both environments can live in
   // the same account without colliding.
-  tableName: string;
+  tableName: string
   // Prod keeps data if the stack is deleted. Dev does not.
-  removalPolicy: RemovalPolicy;
-  pointInTimeRecovery: boolean;
+  removalPolicy: RemovalPolicy
+  pointInTimeRecovery: boolean
   // Optional: the Amplify SSR compute role created in book 13.4.7.
   // When set, the stack attaches the table policy to it for you.
-  ssrRoleName?: string;
+  ssrRoleName?: string
   // Days to keep chat sessions. TTL is applied to session items.
-  sessionTtlDays: number;
+  sessionTtlDays: number
 }
 
 export const ENVIRONMENTS: Record<EnvName, EnvConfig> = {
@@ -36,11 +36,11 @@ export const ENVIRONMENTS: Record<EnvName, EnvConfig> = {
     pointInTimeRecovery: true,
     sessionTtlDays: 90,
   },
-};
+}
 
 export function resolveEnv(name: string | undefined): EnvConfig {
   if (name !== 'dev' && name !== 'prod') {
-    throw new Error(`env must be "dev" or "prod", got: ${String(name)}`);
+    throw new Error(`env must be "dev" or "prod", got: ${String(name)}`)
   }
-  return ENVIRONMENTS[name];
+  return ENVIRONMENTS[name]
 }
