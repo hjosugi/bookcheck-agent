@@ -12,6 +12,21 @@ AgentCore 本 13章ハンズオン  値のメモ帳（テンプレート）
 
 --------------------------------------------------------
 
+Phase 1 で作る Google 側の値（メモ #1 の材料。AgentCore に貼るだけで、
+以降の手順では直接は使いません）
+
+  Google Cloud プロジェクト名:  bookchecker
+  OAuth クライアント ID:
+  OAuth クライアントシークレット:
+  AgentCore が示したリダイレクト URI（Google に登録する側）:
+    https://bedrock-agentcore.us-east-1.amazonaws.com/identities/oauth2/callback
+    ※ 画面に出た文字列で上書きしてください
+  [ ] Google Calendar API を有効化した
+  [ ] OAuth 同意画面のスコープに calendar.events を入れた
+  [ ] テストユーザーに自分のアカウントを追加した
+
+--------------------------------------------------------
+
 1. クレデンシャルプロバイダー名
    生まれる場所: Phase 1 (13.2.1)
    使う場所:     ランタイム環境変数
