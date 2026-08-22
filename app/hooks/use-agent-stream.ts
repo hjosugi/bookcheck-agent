@@ -99,7 +99,7 @@ export async function streamAgent(params: StreamParams): Promise<StreamResult> {
       if (receivedAny) return { status: 'interrupted' }
       // Nothing shown yet: safe to retry the connection.
       if (attempt < MAX_CONNECT_RETRY) {
-        await new Promise((r) => setTimeout(r, 500 * 2 ** attempt))
+        await new Promise(r => setTimeout(r, 500 * 2 ** attempt))
         continue
       }
       return { status: 'interrupted' }

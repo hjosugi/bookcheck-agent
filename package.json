@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "setup": "bun install && bun run agent:sync && bun run setup:check",
-    "setup:check": "node --version && bun --version && uv --version && (podman --version || docker --version) && (aws --version || echo 'AWS CLI is not installed; see AWS_SETUP.md')",
+    "setup:check": "node --version && bun --version && uv --version && (podman --version || docker --version) && (aws --version || echo 'AWS CLI is not installed; see README.md 3-1')",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

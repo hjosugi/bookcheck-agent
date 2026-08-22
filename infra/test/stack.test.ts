@@ -75,7 +75,7 @@ describe('iam policy', () => {
 
   it('never grants a wildcard action', () => {
     const policies = synth('prod').findResources('AWS::IAM::ManagedPolicy')
-    const actions = Object.values(policies).flatMap((p) =>
+    const actions = Object.values(policies).flatMap(p =>
       p.Properties.PolicyDocument.Statement.flatMap((s: { Action: string | string[] }) =>
         Array.isArray(s.Action) ? s.Action : [s.Action],
       ),

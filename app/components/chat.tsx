@@ -68,7 +68,7 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
         }
         if (cancelled) return
         setMessages(
-          data.messages.map((m) => ({
+          data.messages.map(m => ({
             id: crypto.randomUUID(),
             role: m.role,
             content: m.content,
@@ -131,7 +131,7 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
 
     // Optimistic user bubble. It shows before any network call.
     const userMsgId = crypto.randomUUID()
-    setMessages((prev) => [...prev, { id: userMsgId, role: 'user', content: text }])
+    setMessages(prev => [...prev, { id: userMsgId, role: 'user', content: text }])
 
     // Segments of assistant text finished in this turn.
     const finishedSegments: string[] = []
@@ -140,7 +140,7 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
     let currentTextMsgId = crypto.randomUUID()
     let needNewTextMsg = false
 
-    setMessages((prev) => [...prev, { id: currentTextMsgId, role: 'assistant', content: '' }])
+    setMessages(prev => [...prev, { id: currentTextMsgId, role: 'assistant', content: '' }])
 
     try {
       const token = await getAuthToken()
@@ -155,7 +155,7 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
         const body = (await rate.json()) as { retryAfterSec?: number }
         setNotice(`送信が多すぎます。約${body.retryAfterSec ?? 5}秒後にもう一度お試しください。`)
         // Roll back the optimistic bubbles.
-        setMessages((prev) => prev.filter((m) => m.id !== userMsgId && m.id !== currentTextMsgId))
+        setMessages(prev => prev.filter(m => m.id !== userMsgId && m.id !== currentTextMsgId))
         setInput(text)
         return
       }
@@ -181,8 +181,8 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
           if (needNewTextMsg) {
             currentTextMsgId = crypto.randomUUID()
             needNewTextMsg = false
-            setMessages((prev) => [
-              ...prev.map((m) =>
+            setMessages(prev => [
+              ...prev.map(m =>
                 m.isStatus && !m.statusCompleted
                   ? { ...m, statusCompleted: true, statusText: 'ツール実行完了' }
                   : m,
@@ -190,22 +190,22 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
               { id: currentTextMsgId, role: 'assistant', content: textAccumulator },
             ])
           } else {
-            setMessages((prev) =>
-              prev.map((m) => (m.id === currentTextMsgId ? { ...m, content: textAccumulator } : m)),
+            setMessages(prev =>
+              prev.map(m => (m.id === currentTextMsgId ? { ...m, content: textAccumulator } : m)),
             )
           }
         } else if (event.type === 'tool_use') {
           flushSegment()
           needNewTextMsg = true
           const displayName = toolDisplayName(event.tool_name || 'ツール')
-          setMessages((prev) => {
+          setMessages(prev => {
             const filtered = prev.filter(
-              (m) => !(m.id === currentTextMsgId && !m.content && !m.isStatus),
+              m => !(m.id === currentTextMsgId && !m.content && !m.isStatus),
             )
-            const lastStatusIdx = filtered.findLastIndex((m) => m.isStatus)
+            const lastStatusIdx = filtered.findLastIndex(m => m.isStatus)
             const hasTextAfterStatus =
               lastStatusIdx !== -1 &&
-              filtered.slice(lastStatusIdx + 1).some((m) => !m.isStatus && m.content)
+              filtered.slice(lastStatusIdx + 1).some(m => !m.isStatus && m.content)
             if (lastStatusIdx !== -1 && !hasTextAfterStatus) {
               return filtered.map((m, i) =>
                 i === lastStatusIdx
@@ -226,8 +226,8 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
             ]
           })
         } else if (event.type === 'tool_result') {
-          setMessages((prev) =>
-            prev.map((m) =>
+          setMessages(prev =>
+            prev.map(m =>
               m.isStatus && !m.statusCompleted
                 ? { ...m, statusCompleted: true, statusText: 'ツール実行完了' }
                 : m,
@@ -237,8 +237,8 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
           flushSegment()
           currentTextMsgId = crypto.randomUUID()
           needNewTextMsg = true
-          setMessages((prev) => [
-            ...prev.map((m) =>
+          setMessages(prev => [
+            ...prev.map(m =>
               m.isStatus && !m.statusCompleted ? { ...m, statusText: 'Google連携を待機中…' } : m,
             ),
             {
@@ -266,8 +266,8 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
         // Save what arrived, mark it, and offer a resume.
         setNotice('接続が中断されました。')
         setCanResume(true)
-        setMessages((prev) =>
-          prev.map((m) => (m.id === currentTextMsgId ? { ...m, interrupted: true } : m)),
+        setMessages(prev =>
+          prev.map(m => (m.id === currentTextMsgId ? { ...m, interrupted: true } : m)),
         )
         if (finishedSegments.length > 0) {
           const partial = finishedSegments.pop()!
@@ -285,8 +285,8 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
       setNotice('エラーが発生しました。もう一度お試しください。')
     } finally {
       setLoading(false)
-      setMessages((prev) =>
-        prev.filter((m) => !(m.role === 'assistant' && !m.isStatus && !m.content.trim())),
+      setMessages(prev =>
+        prev.filter(m => !(m.role === 'assistant' && !m.isStatus && !m.content.trim())),
       )
     }
   }
@@ -317,7 +317,7 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
             <p>登録したい予定を教えてください</p>
           </div>
         )}
-        {messages.map((m) => {
+        {messages.map(m => {
           if (m.isStatus) {
             return (
               <div key={m.id} className="message-row assistant">
@@ -367,7 +367,7 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
       <form className="input-area" onSubmit={handleSubmit}>
         <input
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={e => setInput(e.target.value)}
           placeholder="メッセージを入力…"
           disabled={loading}
         />

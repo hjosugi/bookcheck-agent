@@ -15,7 +15,7 @@ from strands_tools.browser import AgentCoreBrowser
 
 from calendar_tool import calendar_is_configured, make_calendar_tool
 
-MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.amazon.nova-pro-v1:0")
+MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.amazon.nova-lite-v1:0")
 MEMORY_ID = os.getenv("MEMORY_BOOKCHECKERMEMORY_ID")
 
 # Hard cap on agent loop turns. Without it the model can retry a failing

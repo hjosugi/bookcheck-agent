@@ -123,7 +123,7 @@ export async function DELETE(req: Request, { params }: Params) {
       await ddb.send(
         new BatchWriteCommand({
           RequestItems: {
-            [TABLE]: items.slice(i, i + 25).map((it) => ({
+            [TABLE]: items.slice(i, i + 25).map(it => ({
               DeleteRequest: { Key: { PK: it.PK, SK: it.SK } },
             })),
           },

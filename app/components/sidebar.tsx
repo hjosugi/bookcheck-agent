@@ -27,7 +27,7 @@ export function Sidebar({ sessions, activeId, busy, onNew, onSelect, onDelete }:
 
       <nav className="session-list">
         {sessions.length === 0 && <p className="session-empty">まだチャットはありません</p>}
-        {sessions.map((s) => (
+        {sessions.map(s => (
           <div
             key={s.sessionId}
             className={`session-item ${s.sessionId === activeId ? 'active' : ''}`}
