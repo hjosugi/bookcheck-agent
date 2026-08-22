@@ -1,0 +1,7 @@
+{
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "ignorePatterns": [".next/**", "infra/cdk.out/**", "infra/node_modules/**"]
+}

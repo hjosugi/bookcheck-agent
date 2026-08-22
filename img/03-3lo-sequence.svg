@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 620" width="960" height="620" font-family="'Hiragino Sans', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP', 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif">
+  <rect width="960" height="620" fill="#ffffff"/>
+  <text x="24" y="34" font-size="18" font-weight="700" fill="#111">3LO 認可とセッションバインディングの流れ</text>
+  <text x="24" y="56" font-size="12" fill="#777">「なぜ Route Handler が 2 本必要なのか」がここで分かる</text>
+
+  <!-- lanes -->
+  <g font-size="12" font-weight="700" fill="#1a3f66">
+    <rect x="24" y="76" width="150" height="34" rx="8" fill="#f5f5f5" stroke="#ccc"/>
+    <text x="60" y="98" fill="#333">ユーザー</text>
+    <rect x="206" y="76" width="150" height="34" rx="8" fill="#fbf3f1" stroke="#dda893"/>
+    <text x="228" y="98" fill="#8a3d22">フロント (React)</text>
+    <rect x="388" y="76" width="170" height="34" rx="8" fill="#fbf3f1" stroke="#dda893"/>
+    <text x="400" y="98" fill="#8a3d22">Route Handler</text>
+    <rect x="590" y="76" width="160" height="34" rx="8" fill="#eef4fb" stroke="#9dbfe0"/>
+    <text x="600" y="98" fill="#1a3f66">エージェント</text>
+    <rect x="782" y="76" width="154" height="34" rx="8" fill="#f2eefb" stroke="#b3a3dd"/>
+    <text x="800" y="98" fill="#3f2f7a">アイデンティティ</text>
+  </g>
+
+  <!-- lifelines -->
+  <g stroke="#ddd" stroke-width="1.5" stroke-dasharray="4 4">
+    <path d="M99 112 L99 560"/>
+    <path d="M281 112 L281 560"/>
+    <path d="M473 112 L473 560"/>
+    <path d="M670 112 L670 560"/>
+    <path d="M859 112 L859 560"/>
+  </g>
+
+  <!-- steps -->
+  <g stroke="#5a7fa6" stroke-width="1.8" fill="none" marker-end="url(#a5)">
+    <path d="M99 150 L277 150"/>
+    <path d="M281 190 L469 190"/>
+    <path d="M281 230 L666 230"/>
+    <path d="M670 270 L855 270"/>
+    <path d="M855 310 L674 310"/>
+    <path d="M666 350 L285 350"/>
+    <path d="M281 390 L103 390"/>
+    <path d="M99 430 L855 430"/>
+    <path d="M855 470 L477 470"/>
+    <path d="M473 510 L855 510"/>
+  </g>
+
+  <g font-size="11.5" fill="#333">
+    <text x="112" y="144">1. プロンプト送信</text>
+    <text x="292" y="184">2. Cognito JWT を Cookie に預ける (set-token)</text>
+    <text x="292" y="224">3. ランタイム呼び出し (JWT 付き)</text>
+    <text x="682" y="264">4. カレンダーツールがトークン要求</text>
+    <text x="560" y="304">5. 未認可 → 認可 URL を返す</text>
+    <text x="300" y="344">6. auth_url イベントを SSE で配信</text>
+    <text x="112" y="384">7. 「Google連携」ボタンを表示</text>
+    <text x="330" y="424">8. ボタンを押して Google でログイン・許可</text>
+    <text x="500" y="464">9. コールバック URL にリダイレクト (session_id 付き)</text>
+    <text x="490" y="504">10. Cookie の JWT で CompleteResourceTokenAuth</text>
+  </g>
+
+  <rect x="388" y="524" width="548" height="30" rx="8" fill="#eef4f0" stroke="#9dc4ad"/>
+  <text x="402" y="544" font-size="11.5" fill="#1c5238">11. 紐付け完了 → エージェントのポーリングが成功しカレンダー登録へ進む</text>
+
+  <rect x="24" y="566" width="912" height="44" rx="10" fill="#f7f9fb" stroke="#d5dee6"/>
+  <text x="42" y="592" font-size="12" fill="#333">なぜ紐付けが要るか：Google のログインと Cognito のログインは別物なので、「この Google 認可はこの Cognito ユーザーのもの」とサーバー側で教える必要がある。</text>
+
+  <defs>
+    <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#5a7fa6"/>
+    </marker>
+  </defs>
+</svg>

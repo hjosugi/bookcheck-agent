@@ -1,0 +1,13 @@
+.next/
+node_modules/
+coverage/
+.env
+.env.*
+!.env.local.example
+!.env.production.example
+infra/cdk.out/
+infra/node_modules/
+agent/app/BookChecker/.venv/
+agent/app/BookChecker/.env
+agent/app/BookChecker/__pycache__/
+screenshots/

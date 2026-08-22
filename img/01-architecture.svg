@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="960" height="520" font-family="'Hiragino Sans', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP', 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif">
+  <rect width="960" height="520" fill="#ffffff"/>
+  <text x="24" y="36" font-size="18" font-weight="700" fill="#111">完成後のアーキテクチャ</text>
+
+  <!-- user -->
+  <rect x="24" y="200" width="110" height="60" rx="10" fill="#f5f5f5" stroke="#ccc"/>
+  <text x="52" y="228" font-size="13" font-weight="700" fill="#333">ブラウザ</text>
+  <text x="42" y="248" font-size="11" fill="#666">ログイン済ユーザー</text>
+
+  <!-- Amplify box -->
+  <rect x="176" y="130" width="250" height="210" rx="12" fill="#fbf3f1" stroke="#dda893"/>
+  <text x="192" y="154" font-size="13" font-weight="700" fill="#8a3d22">AWS Amplify (Next.js)</text>
+
+  <rect x="192" y="168" width="218" height="52" rx="8" fill="#ffffff" stroke="#dda893"/>
+  <text x="206" y="188" font-size="12" font-weight="700" fill="#333">フロントエンド (React)</text>
+  <text x="206" y="206" font-size="11" fill="#666">チャットUI / ステータス表示</text>
+
+  <rect x="192" y="232" width="218" height="92" rx="8" fill="#ffffff" stroke="#dda893"/>
+  <text x="206" y="252" font-size="12" font-weight="700" fill="#333">Route Handler (サーバー側)</text>
+  <text x="206" y="272" font-size="11" fill="#666">api/set-token</text>
+  <text x="206" y="288" font-size="11" fill="#666">api/oauth2/callback</text>
+  <text x="206" y="308" font-size="10.5" fill="#8a6d1a">SSRコンピュートロールで実行</text>
+
+  <!-- Cognito -->
+  <rect x="176" y="46" width="250" height="60" rx="10" fill="#f2eefb" stroke="#b3a3dd"/>
+  <text x="192" y="70" font-size="13" font-weight="700" fill="#3f2f7a">Amazon Cognito</text>
+  <text x="192" y="90" font-size="11" fill="#666">サインアップ / JWT 発行</text>
+
+  <!-- AgentCore Runtime -->
+  <rect x="480" y="120" width="270" height="230" rx="12" fill="#eef4fb" stroke="#9dbfe0"/>
+  <text x="496" y="144" font-size="13" font-weight="700" fill="#1a3f66">AgentCore ランタイム</text>
+  <text x="496" y="162" font-size="11" fill="#666">Docker コンテナ / JWT 認証あり</text>
+
+  <rect x="496" y="176" width="238" height="72" rx="8" fill="#ffffff" stroke="#9dbfe0"/>
+  <text x="510" y="196" font-size="12" font-weight="700" fill="#333">AI エージェント (Strands)</text>
+  <text x="510" y="214" font-size="11" fill="#666">モデル: Amazon Nova Pro</text>
+  <text x="510" y="232" font-size="11" fill="#666">ツール: ブラウザ / カレンダー登録</text>
+
+  <rect x="496" y="258" width="238" height="72" rx="8" fill="#ffffff" stroke="#9dbfe0"/>
+  <text x="510" y="278" font-size="12" font-weight="700" fill="#333">セッションマネージャー</text>
+  <text x="510" y="296" font-size="11" fill="#666">短期記憶: 同一セッション内</text>
+  <text x="510" y="314" font-size="11" fill="#666">長期記憶: ユーザーの好み</text>
+
+  <!-- right services -->
+  <g>
+    <rect x="800" y="120" width="136" height="46" rx="8" fill="#f5f5f5" stroke="#ccc"/>
+    <text x="814" y="148" font-size="12" fill="#333">Bedrock (LLM)</text>
+
+    <rect x="800" y="178" width="136" height="46" rx="8" fill="#f5f5f5" stroke="#ccc"/>
+    <text x="814" y="206" font-size="12" fill="#333">AgentCore ブラウザ</text>
+
+    <rect x="800" y="236" width="136" height="46" rx="8" fill="#f5f5f5" stroke="#ccc"/>
+    <text x="814" y="256" font-size="12" fill="#333">AgentCore</text>
+    <text x="814" y="272" font-size="12" fill="#333">アイデンティティ</text>
+
+    <rect x="800" y="294" width="136" height="46" rx="8" fill="#f5f5f5" stroke="#ccc"/>
+    <text x="814" y="322" font-size="12" fill="#333">AgentCore メモリー</text>
+
+    <rect x="800" y="360" width="136" height="46" rx="8" fill="#f5f5f5" stroke="#ccc"/>
+    <text x="814" y="388" font-size="12" fill="#333">Google カレンダー</text>
+  </g>
+
+  <!-- arrows -->
+  <g stroke="#666" stroke-width="1.6" fill="none" marker-end="url(#a2)">
+    <path d="M134 218 L172 218"/>
+    <path d="M301 130 L301 110"/>
+    <path d="M410 200 C 445 200, 445 190, 476 190"/>
+    <path d="M734 143 L796 143"/>
+    <path d="M734 201 L796 201"/>
+    <path d="M734 259 L796 259"/>
+    <path d="M734 300 L796 315"/>
+    <path d="M840 282 L840 356"/>
+  </g>
+  <g stroke="#c46a4a" stroke-width="1.6" stroke-dasharray="5 4" fill="none" marker-end="url(#a3)">
+    <path d="M476 220 C 445 220, 445 214, 412 214"/>
+    <path d="M176 200 L138 208"/>
+  </g>
+
+
+  <rect x="24" y="430" width="912" height="62" rx="10" fill="#f7f9fb" stroke="#d5dee6"/>
+  <text x="42" y="452" font-size="12" fill="#333">実線 → : プロンプト + Cognito JWT　　破線 ⇠ : SSE ストリーム (text / tool_use / tool_result / auth_url)</text>
+  <text x="42" y="474" font-size="12" fill="#333">ポイント: ブラウザは AgentCore ランタイムを直接呼ぶ。Route Handler は 3LO 認可の紐付けだけを担当するので、Lambda を別途用意しなくてよい。</text>
+
+  <defs>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#666"/>
+    </marker>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c46a4a"/>
+    </marker>
+  </defs>
+</svg>

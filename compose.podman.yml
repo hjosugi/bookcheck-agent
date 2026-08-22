@@ -1,0 +1,26 @@
+# Podman variant for environments where rootless bridge creation is unavailable.
+# Host networking means the admin container reaches DynamoDB on 127.0.0.1.
+
+services:
+  dynamodb:
+    image: docker.io/amazon/dynamodb-local:latest
+    container_name: bookchecker-dynamodb
+    network_mode: host
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/data"]
+    volumes:
+      - dynamodb-data:/data:Z
+
+  dynamodb-admin:
+    image: docker.io/aaronshaf/dynamodb-admin:latest
+    container_name: bookchecker-dynamodb-admin
+    network_mode: host
+    environment:
+      DYNAMO_ENDPOINT: http://127.0.0.1:8000
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+    depends_on:
+      - dynamodb
+
+volumes:
+  dynamodb-data:

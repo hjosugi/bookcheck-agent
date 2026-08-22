@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" font-family="'Hiragino Sans', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP', 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif">
+  <rect width="960" height="440" fill="#ffffff"/>
+  <text x="24" y="34" font-size="18" font-weight="700" fill="#111">キュー合流：なぜツールを関数で生成するのか</text>
+  <text x="24" y="56" font-size="12" fill="#777">SSE は 1 本しか流せない。応答テキストと認可 URL をキューで 1 本にまとめる。</text>
+
+  <!-- sources -->
+  <rect x="24" y="110" width="230" height="66" rx="10" fill="#eef4fb" stroke="#9dbfe0"/>
+  <text x="40" y="136" font-size="12.5" font-weight="700" fill="#333">エージェントの応答テキスト</text>
+  <text x="40" y="158" font-size="11" fill="#666">agent.stream_async() から</text>
+
+  <rect x="24" y="210" width="230" height="66" rx="10" fill="#f2eefb" stroke="#b3a3dd"/>
+  <text x="40" y="236" font-size="12.5" font-weight="700" fill="#333">Google 認可 URL</text>
+  <text x="40" y="258" font-size="11" fill="#666">カレンダーツールの中から</text>
+
+  <!-- queue -->
+  <rect x="330" y="140" width="150" height="110" rx="12" fill="#2f4f7a"/>
+  <text x="366" y="188" font-size="14" font-weight="700" fill="#ffffff">asyncio</text>
+  <text x="368" y="212" font-size="14" font-weight="700" fill="#ffffff">Queue</text>
+
+  <!-- consumer -->
+  <rect x="556" y="140" width="180" height="110" rx="10" fill="#fbf3f1" stroke="#dda893"/>
+  <text x="572" y="172" font-size="12.5" font-weight="700" fill="#8a3d22">SSE 配信ループ</text>
+  <text x="572" y="196" font-size="11" fill="#555">while True: get() して yield</text>
+  <text x="572" y="216" font-size="11" fill="#555">None が来たら終了</text>
+
+  <!-- front -->
+  <rect x="796" y="140" width="140" height="110" rx="10" fill="#f5f5f5" stroke="#ccc"/>
+  <text x="812" y="172" font-size="12.5" font-weight="700" fill="#333">フロントエンド</text>
+  <text x="812" y="196" font-size="11" fill="#666">text → 吹き出し</text>
+  <text x="812" y="216" font-size="11" fill="#666">auth_url → ボタン</text>
+
+  <g stroke="#8aa8c4" stroke-width="2" fill="none" marker-end="url(#a6)">
+    <path d="M254 143 C 300 143, 300 170, 326 175"/>
+    <path d="M254 243 C 300 243, 300 220, 326 215"/>
+    <path d="M480 195 L552 195"/>
+    <path d="M736 195 L792 195"/>
+  </g>
+
+  <rect x="24" y="310" width="912" height="106" rx="10" fill="#f7f9fb" stroke="#d5dee6"/>
+  <text x="42" y="336" font-size="12.5" font-weight="700" fill="#1a3f66">3 つの実装上のコツ</text>
+  <text x="42" y="360" font-size="12" fill="#333">1. ツールは async def にする。認可待ちのポーリング中も SSE 配信が止まらない。</text>
+  <text x="42" y="382" font-size="12" fill="#333">2. エージェント実行は asyncio.create_task で別タスクにする。同じタスクだとポーリング中にストリームが固まる。</text>
+  <text x="42" y="404" font-size="12" fill="#333">3. @requires_access_token は @tool の内側に置く。外側だと access_token がツール定義に露出し、LLM がユーザーにトークンを聞いてしまう。</text>
+
+  <defs>
+    <marker id="a6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8aa8c4"/>
+    </marker>
+  </defs>
+</svg>

@@ -1,0 +1,177 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: #fff;
+  color: #111;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  background: #fff;
+}
+
+.header {
+  padding: 20px 24px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.header h1 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.header p {
+  margin-top: 4px;
+  color: #777;
+  font-size: 0.8rem;
+}
+
+.messages {
+  flex: 1;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 20px;
+  overflow-y: auto;
+}
+
+.empty-state {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  line-height: 1.8;
+  text-align: center;
+}
+
+.empty-icon {
+  margin-bottom: 12px;
+  font-size: 2.5rem;
+}
+
+.message-row {
+  display: flex;
+  margin-bottom: 12px;
+}
+
+.message-row.user {
+  justify-content: flex-end;
+}
+
+.bubble {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.bubble.user {
+  color: #fff;
+  background: #111;
+  border-bottom-right-radius: 4px;
+}
+
+.bubble.assistant {
+  color: #222;
+  background: #f7f7f8;
+  border: 1px solid #ebebeb;
+  border-bottom-left-radius: 4px;
+}
+
+.bubble p,
+.bubble ul,
+.bubble ol,
+.bubble pre,
+.bubble table {
+  margin: 0 0 8px;
+}
+
+.bubble ul,
+.bubble ol {
+  padding-left: 20px;
+}
+
+.bubble pre {
+  padding: 12px;
+  overflow-x: auto;
+  color: #eee;
+  background: #1a1a1a;
+  border-radius: 8px;
+}
+
+.bubble table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.bubble th,
+.bubble td {
+  padding: 6px;
+  border: 1px solid #ddd;
+}
+
+.auth-button {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 8px 14px;
+  color: #fff;
+  text-decoration: none;
+  background: #111;
+  border-radius: 8px;
+}
+
+.input-area {
+  display: flex;
+  gap: 8px;
+  padding: 16px max(20px, calc((100% - 760px) / 2 + 20px));
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+}
+
+.input-area input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 14px;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+
+.input-area button {
+  padding: 10px 20px;
+  color: #fff;
+  cursor: pointer;
+  background: #111;
+  border: 0;
+  border-radius: 10px;
+}
+
+.input-area button:disabled {
+  color: #888;
+  cursor: not-allowed;
+  background: #ddd;
+}

@@ -1,0 +1,29 @@
+services:
+  dynamodb:
+    # Fully qualified names are required by rootless Podman when no
+    # unqualified-search registries are configured.
+    image: docker.io/amazon/dynamodb-local:latest
+    container_name: bookchecker-dynamodb
+    command: [ "-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/data" ]
+    ports:
+      - "8000:8000"
+    volumes:
+      # Z gives the volume a private SELinux label on Podman hosts and
+      # is also accepted by Docker on Linux.
+      - dynamodb-data:/data:Z
+
+  dynamodb-admin:
+    image: docker.io/aaronshaf/dynamodb-admin:latest
+    container_name: bookchecker-dynamodb-admin
+    environment:
+      DYNAMO_ENDPOINT: http://dynamodb:8000
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: local
+      AWS_SECRET_ACCESS_KEY: local
+    ports:
+      - "8001:8001"
+    depends_on:
+      - dynamodb
+
+volumes:
+  dynamodb-data:

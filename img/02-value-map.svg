@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" width="960" height="600" font-family="'Hiragino Sans', 'Yu Gothic', Meiryo, 'Noto Sans CJK JP', 'Noto Sans JP', 'Helvetica Neue', Arial, sans-serif">
+  <rect width="960" height="600" fill="#ffffff"/>
+  <text x="24" y="34" font-size="18" font-weight="700" fill="#111">メモした値がどこで使われるか</text>
+  <text x="24" y="56" font-size="12" fill="#777">左=値が生まれる場所　右=貼り付ける場所。ここを間違えるとほぼ全部のトラブルが起きる。</text>
+
+  <!-- left column header -->
+  <text x="40" y="90" font-size="12.5" font-weight="700" fill="#8a6d1a">値ができる場所</text>
+  <text x="600" y="90" font-size="12.5" font-weight="700" fill="#1a3f66">貼り付ける場所</text>
+
+  <!-- sources -->
+  <g>
+    <rect x="24" y="104" width="240" height="54" rx="8" fill="#fff8e6" stroke="#e2cf95"/>
+    <text x="38" y="126" font-size="12" font-weight="700" fill="#333">クレデンシャルプロバイダー名</text>
+    <text x="38" y="145" font-size="11" fill="#777">Phase 1 で作成 (13.2.1)</text>
+
+    <rect x="24" y="176" width="240" height="54" rx="8" fill="#fff8e6" stroke="#e2cf95"/>
+    <text x="38" y="198" font-size="12" font-weight="700" fill="#333">ランタイム ARN</text>
+    <text x="38" y="217" font-size="11" fill="#777">Phase 3 のデプロイ後 (13.4.5)</text>
+
+    <rect x="24" y="248" width="240" height="54" rx="8" fill="#fff8e6" stroke="#e2cf95"/>
+    <text x="38" y="270" font-size="12" font-weight="700" fill="#333">Amplify ドメイン URL</text>
+    <text x="38" y="289" font-size="11" fill="#777">Phase 5 のデプロイ後 (13.4.6)</text>
+
+    <rect x="24" y="320" width="240" height="54" rx="8" fill="#fff8e6" stroke="#e2cf95"/>
+    <text x="38" y="342" font-size="12" font-weight="700" fill="#333">Cognito ユーザープール ID</text>
+    <text x="38" y="361" font-size="11" fill="#777">Phase 5 のデプロイ後 (13.4.6)</text>
+
+    <rect x="24" y="392" width="240" height="54" rx="8" fill="#fff8e6" stroke="#e2cf95"/>
+    <text x="38" y="414" font-size="12" font-weight="700" fill="#333">Cognito クライアント ID</text>
+    <text x="38" y="433" font-size="11" fill="#777">Phase 5 のデプロイ後 (13.4.6)</text>
+  </g>
+
+  <!-- derived value -->
+  <rect x="300" y="248" width="230" height="54" rx="8" fill="#fdeef0" stroke="#e0a3ad"/>
+  <text x="314" y="270" font-size="12" font-weight="700" fill="#7a1f2e">コールバック URL</text>
+  <text x="314" y="289" font-size="10.5" fill="#555">ドメイン + /api/oauth2/callback</text>
+
+  <!-- targets -->
+  <g>
+    <rect x="592" y="104" width="344" height="46" rx="8" fill="#eef4fb" stroke="#9dbfe0"/>
+    <text x="606" y="124" font-size="12" font-weight="700" fill="#333">ランタイム環境変数 CREDENTIAL_PROVIDER_NAME</text>
+    <text x="606" y="142" font-size="10.5" fill="#777">13.4.8 ホスティングをアップデート</text>
+
+    <rect x="592" y="162" width="344" height="46" rx="8" fill="#eef4fb" stroke="#9dbfe0"/>
+    <text x="606" y="182" font-size="12" font-weight="700" fill="#333">Amplify 環境変数 NEXT_PUBLIC_AGENT_ARN</text>
+    <text x="606" y="200" font-size="10.5" fill="#777">13.4.6 デプロイウィザードの詳細設定</text>
+
+    <rect x="592" y="220" width="344" height="46" rx="8" fill="#eef4fb" stroke="#9dbfe0"/>
+    <text x="606" y="240" font-size="12" font-weight="700" fill="#333">CLI の &lt;ランタイムID&gt; ワークロードID更新</text>
+    <text x="606" y="258" font-size="10.5" fill="#777">ARN の runtime/ 以降だけを使う</text>
+
+    <rect x="592" y="278" width="344" height="46" rx="8" fill="#eef4fb" stroke="#9dbfe0"/>
+    <text x="606" y="298" font-size="12" font-weight="700" fill="#333">ランタイム環境変数 CALLBACK_URL</text>
+    <text x="606" y="316" font-size="10.5" fill="#777">13.4.8 ホスティングをアップデート</text>
+
+    <rect x="592" y="336" width="344" height="46" rx="8" fill="#eef4fb" stroke="#9dbfe0"/>
+    <text x="606" y="356" font-size="12" font-weight="700" fill="#333">ワークロードID の許可 URL リスト</text>
+    <text x="606" y="374" font-size="10.5" fill="#777">CloudShell から AWS CLI で登録</text>
+
+    <rect x="592" y="394" width="344" height="46" rx="8" fill="#eef4fb" stroke="#9dbfe0"/>
+    <text x="606" y="414" font-size="12" font-weight="700" fill="#333">インバウンド認証の検出 URL</text>
+    <text x="606" y="432" font-size="10.5" fill="#777">cognito-idp の .well-known URL に埋める</text>
+
+    <rect x="592" y="452" width="344" height="46" rx="8" fill="#eef4fb" stroke="#9dbfe0"/>
+    <text x="606" y="472" font-size="12" font-weight="700" fill="#333">インバウンド認証の許可クライアント</text>
+    <text x="606" y="490" font-size="10.5" fill="#777">「クライアントを追加」で登録</text>
+  </g>
+
+  <!-- edges -->
+  <g stroke="#b0b8c0" stroke-width="1.6" fill="none" marker-end="url(#a4)">
+    <path d="M264 131 C 420 131, 440 127, 588 127"/>
+    <path d="M264 195 C 420 195, 440 185, 588 185"/>
+    <path d="M264 205 C 400 205, 430 240, 588 243"/>
+    <path d="M264 275 L296 275"/>
+    <path d="M530 268 C 560 268, 560 300, 588 301"/>
+    <path d="M530 282 C 560 282, 560 355, 588 359"/>
+    <path d="M264 347 C 420 347, 440 410, 588 417"/>
+    <path d="M264 419 C 420 419, 440 470, 588 475"/>
+  </g>
+
+  <rect x="24" y="520" width="912" height="62" rx="10" fill="#fdeef0" stroke="#e0a3ad"/>
+  <text x="42" y="544" font-size="12.5" font-weight="700" fill="#7a1f2e">最頻出のミス</text>
+  <text x="42" y="566" font-size="12" fill="#333">コールバック URL は 2 か所（ランタイム環境変数とワークロードID）に、完全に同じ文字列で入れる。末尾スラッシュや大文字小文字の違いで Google 連携が失敗する。</text>
+
+  <defs>
+    <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#b0b8c0"/>
+    </marker>
+  </defs>
+</svg>

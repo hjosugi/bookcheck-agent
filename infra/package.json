@@ -1,0 +1,27 @@
+{
+  "name": "bookcheck-agent-infra",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "synth:dev": "cdk synth -c env=dev",
+    "synth:prod": "cdk synth -c env=prod",
+    "diff:dev": "cdk diff -c env=dev",
+    "deploy:dev": "cdk deploy -c env=dev",
+    "deploy:prod": "cdk deploy -c env=prod",
+    "destroy:dev": "cdk destroy -c env=dev",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "aws-cdk": "2.1138.0",
+    "typescript": "^5.7.0",
+    "tsx": "4.23.12",
+    "vitest": "4.1.11"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.266.0",
+    "constructs": "10.8.1"
+  }
+}
