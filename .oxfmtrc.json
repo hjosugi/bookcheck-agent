@@ -1,4 +1,5 @@
 {
+  "ignorePatterns": ["next-env.d.ts"],
   "singleQuote": true,
   "semi": false,
   "trailingComma": "all"

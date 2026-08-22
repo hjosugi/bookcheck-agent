@@ -69,4 +69,3 @@ DynamoDB テーブルを最初に作るコマンドは [LOCAL_DEV.md](LOCAL_DEV.
 | [AWS_SETUP.md](AWS_SETUP.md)                                       | AWS CLI、Nova 確認、CDK デプロイ      |
 | [TESTING.md](TESTING.md)                                           | テストの対象と実行方法                |
 | [HANDSON.md](HANDSON.md)                                           | 書籍第13章の再構成手順                |
-| [screenshots/OCR.md](screenshots/OCR.md)                           | 書籍写真をページ順に整理したOCRノート |
