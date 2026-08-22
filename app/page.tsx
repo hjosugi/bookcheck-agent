@@ -5,9 +5,6 @@ import { getAuthToken } from './lib/auth-token'
 import { Sidebar, type SessionSummary } from './components/sidebar'
 import { Chat } from './components/chat'
 
-// Shell page. Holds the session list and the active session.
-// The Chat component owns messages and streaming.
-
 async function authedFetch(path: string, init?: RequestInit) {
   const token = await getAuthToken()
   return fetch(path, {
@@ -21,13 +18,8 @@ export default function Page() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  // Bumped on every "new chat" click. Without it the click is a no-op
-  // whenever activeId is already null (a fresh load, or a new chat that
-  // has not been sent yet): setActiveId(null) changes nothing, so the
-  // Chat key stays the same and the component never remounts.
   const [newChatNonce, setNewChatNonce] = useState(0)
 
-  // Fetch only. The caller decides what to do with the result.
   const fetchSessions = useCallback(async (): Promise<SessionSummary[]> => {
     try {
       const res = await authedFetch('/api/sessions')
@@ -35,18 +27,14 @@ export default function Page() {
       const data = (await res.json()) as { sessions: SessionSummary[] }
       return data.sessions
     } catch {
-      // The sidebar is not critical. Keep the chat usable.
       return []
     }
   }, [])
 
-  // Used after a message is saved, so the order and titles stay right.
   const refreshSessions = useCallback(async () => {
     setSessions(await fetchSessions())
   }, [fetchSessions])
 
-  // Load the session list once on mount. This synchronizes with an
-  // external system (the API), which is what effects are for.
   useEffect(() => {
     let cancelled = false
     void (async () => {
@@ -62,16 +50,14 @@ export default function Page() {
     const res = await authedFetch('/api/sessions', { method: 'POST' })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const data = (await res.json()) as { session: SessionSummary }
-    setSessions((prev) => [data.session, ...prev])
+    setSessions(prev => [data.session, ...prev])
     setActiveId(data.session.sessionId)
     return data.session
   }, [])
 
   const handleNew = () => {
-    // A new chat starts empty. The session row is created on
-    // the first message, not here. This avoids empty sessions.
     setActiveId(null)
-    setNewChatNonce((n) => n + 1)
+    setNewChatNonce(n => n + 1)
     setSidebarOpen(false)
   }
 
@@ -85,21 +71,21 @@ export default function Page() {
     setBusy(true)
     try {
       await authedFetch(`/api/sessions/${id}`, { method: 'DELETE' })
-      setSessions((prev) => prev.filter((s) => s.sessionId !== id))
+      setSessions(prev => prev.filter(s => s.sessionId !== id))
       if (activeId === id) setActiveId(null)
     } finally {
       setBusy(false)
     }
   }
 
-  const activeSession = sessions.find((s) => s.sessionId === activeId) ?? null
+  const activeSession = sessions.find(s => s.sessionId === activeId) ?? null
 
   return (
     <div className="shell">
       <button
         className="sidebar-toggle"
         aria-label="チャット一覧を開閉"
-        onClick={() => setSidebarOpen((v) => !v)}
+        onClick={() => setSidebarOpen(v => !v)}
       >
         ☰
       </button>
