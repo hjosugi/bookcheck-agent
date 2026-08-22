@@ -67,13 +67,16 @@ export class BookcheckAgentStack extends Stack {
       ssrRole.addManagedPolicy(this.accessPolicy)
     }
 
-    new CfnOutput(this, 'TableName', {
+    const tableNameOutput = new CfnOutput(this, 'TableName', {
       value: this.table.tableName,
       description: 'Set this as DYNAMO_TABLE_NAME',
     })
-    new CfnOutput(this, 'TableAccessPolicyArn', {
+    const tableAccessPolicyArnOutput = new CfnOutput(this, 'TableAccessPolicyArn', {
       value: this.accessPolicy.managedPolicyArn,
       description: 'Attach this to the Amplify SSR compute role',
     })
+
+    void tableNameOutput
+    void tableAccessPolicyArnOutput
   }
 }

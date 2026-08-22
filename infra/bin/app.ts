@@ -16,7 +16,7 @@ const config = resolveEnv(envName)
 const ssrRoleName = app.node.tryGetContext('ssrRoleName')
 if (ssrRoleName) config.ssrRoleName = ssrRoleName
 
-new BookcheckAgentStack(app, `BookcheckAgent-${config.name}`, {
+const stack = new BookcheckAgentStack(app, `BookcheckAgent-${config.name}`, {
   config,
   env: {
     account: process.env.CDK_DEFAULT_ACCOUNT,
@@ -25,3 +25,5 @@ new BookcheckAgentStack(app, `BookcheckAgent-${config.name}`, {
   description: `bookcheck-agent resources (${config.name})`,
   tags: { project: 'bookcheck-agent', environment: config.name },
 })
+
+void stack

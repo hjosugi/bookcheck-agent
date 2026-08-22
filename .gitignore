@@ -11,3 +11,5 @@ agent/app/BookChecker/.venv/
 agent/app/BookChecker/.env
 agent/app/BookChecker/__pycache__/
 screenshots/
+handson-memo.local.txt
+tsconfig.tsbuildinfo

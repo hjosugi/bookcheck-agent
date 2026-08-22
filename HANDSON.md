@@ -6,8 +6,8 @@
 
 - 公式サンプル: <https://github.com/minorun365/agentcore-book/tree/main/chapter13>
 - 手元の書籍写真: 各自の手元に用意してください（このリポジトリには含めていません）
-- コマンド一覧（正誤情報つき）: `chapter13/README.md`
-- メモ用テンプレート: `chapter13/handson-memo.txt`
+- コマンド一覧: [README.md](README.md)（このリポジトリの `bun run` スクリプト）
+- メモ用テンプレート: [handson-memo.txt](handson-memo.txt)
 
 ---
 
@@ -106,7 +106,7 @@ bunx agentcore create
 - **Container**: ブラウザツールが内部で使う Playwright には実行権限が必要です。直接コードデプロイだと ZIP 展開時に権限が失われます。
 - **Long-term and short-term**: この選択によって、後の `agentcore deploy` 時に AgentCore メモリーが自動作成され、メモリー ID がランタイムの環境変数へ自動で注入されます。
 
-**チェックポイント**: `agent/` ディレクトリができ、`app/BookChecker/main.py` と `agentcore/agentcore.json` が生成されていること。
+**チェックポイント**: `agent/` ディレクトリができ、`agent/app/BookChecker/main.py` と `agent/agentcore/agentcore.json` が生成されていること。
 
 ---
 
@@ -132,8 +132,8 @@ uv add requests==2.33.1 strands-agents-tools==0.5.1 playwright==1.58.0 nest-asyn
 touch calendar_tool.py
 ```
 
-コードは書籍 13.3.3、またはリポジトリの
-`chapter13/bookchecker/agent/app/BookChecker/calendar_tool.py` からコピーします。
+コードは書籍 13.3.3、またはこのリポジトリの
+`agent/app/BookChecker/calendar_tool.py` からコピーします。
 
 このファイルは「なぜこう書くのか」が一番おもしろい部分なので、図で押さえておきます。
 
@@ -216,8 +216,11 @@ touch app/providers.tsx
 
 `page.tsx` と `globals.css` は長いので、リポジトリからコピー&ペーストします。
 
-- <https://github.com/minorun365/agentcore-book/tree/main/chapter13/bookchecker/app/page.tsx>
-- <https://github.com/minorun365/agentcore-book/tree/main/chapter13/bookchecker/app/globals.css>
+- <https://github.com/minorun365/agentcore-book/blob/main/chapter13/bookchecker/app/page.tsx>
+- <https://github.com/minorun365/agentcore-book/blob/main/chapter13/bookchecker/app/globals.css>
+
+このリポジトリの `app/page.tsx` と `app/globals.css` は書籍版ではなく強化版なので、
+まず書籍どおりに進めてから [HANDOFF.md](HANDOFF.md) の差分を当ててください。
 
 `amplify_outputs.json` が無いという構文エラーがエディタに出ますが、これは Amplify へのデプロイ時に自動生成されるファイルなので、そのまま進めて問題ありません。
 
@@ -501,5 +504,5 @@ AgentCore や Strands Agents はアップデートが速い分野なので、AI 
 ## この後の発展
 
 - 第15章では AWS CDK で AgentCore ランタイムと周辺リソースをまとめてデプロイします。今回の GUI 操作をコード化する回です。
-- フロントエンドを強化する差分（マルチセッション永続化・SSE 堅牢化・レートリミット）は `bookcheck-agent/` にあります。本ハンズオンを一度完走してから適用してください。
-- ローカルだけで動かす手順（Cognito なし・DynamoDB Local・エージェントをローカル起動）は `bookcheck-agent/LOCAL_DEV.md` を参照してください。
+- フロントエンドを強化する差分（マルチセッション永続化・SSE 堅牢化・レートリミット）はこのリポジトリそのものです。内容は [HANDOFF.md](HANDOFF.md) にまとめてあります。本ハンズオンを一度完走してから適用してください。
+- ローカルだけで動かす手順（Cognito なし・DynamoDB Local・エージェントをローカル起動）は [LOCAL_DEV.md](LOCAL_DEV.md) を参照してください。

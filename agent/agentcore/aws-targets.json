@@ -1,0 +1,8 @@
+[
+  {
+    "name": "dev",
+    "description": "Replace the placeholder account before deploying",
+    "account": "000000000000",
+    "region": "us-east-1"
+  }
+]

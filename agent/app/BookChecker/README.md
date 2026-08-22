@@ -21,6 +21,10 @@ Python コードはローカルからデプロイできます。Container build 
 AgentCore CLI が CodeBuild でイメージを構築し、ECR と AgentCore Runtime
 へ反映します。
 
+先に [AWS_SETUP.md](../../../AWS_SETUP.md) の手順で AWS CLI を設定し、
+`agent/agentcore/aws-targets.json` の placeholder account を実アカウントへ
+置き換えます。
+
 ```bash
 bun run agent:validate
 bun run agent:deploy

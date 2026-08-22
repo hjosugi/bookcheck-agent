@@ -86,14 +86,14 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
 
   async function saveMessage(
     token: string,
-    sessionId: string,
+    targetSessionId: string,
     role: 'user' | 'assistant',
     content: string,
     kind: 'normal' | 'partial' = 'normal',
   ) {
     // Persistence failure must not break the chat. Show a notice only.
     try {
-      await fetch(`/api/sessions/${sessionId}`, {
+      await fetch(`/api/sessions/${targetSessionId}`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
