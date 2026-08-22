@@ -74,16 +74,13 @@ JavaScript/TypeScript はルートの `package.json` と `bun.lock`、Python は
 - [ ] Google アカウント（カレンダーの登録先）
 - [ ] 手元に Node.js 20.9+ / Bun / Python 3.12+ と uv / Docker か Podman / AWS CLI v2
 
-> **自分のマシンで作業する前提です。** 書籍は GitHub Codespaces を使いますが、
-> ここでは使いません。
-
 ---
 
 ## 3. 環境を用意する
 
 ### 3-1. AWS CLI v2 と認証
 
-Arch Linux / CachyOS なら次で入ります（sudo パスワードが必要です）。
+Arch Linux / CachyOS awscliのinstsall
 
 ```bash
 paru -S --needed aws-cli-v2
@@ -174,33 +171,45 @@ bun run dcc:ps
 **初回だけ**テーブルを作ります。DynamoDB Local は認証情報を検証しませんが、
 AWS CLI が値を要求するのでダミーを渡します。
 
-```bash
-export AWS_ACCESS_KEY_ID=local
-export AWS_SECRET_ACCESS_KEY=local
-export AWS_DEFAULT_REGION=us-east-1
-export DYNAMO_ENDPOINT=http://127.0.0.1:8000
-export DYNAMO_TABLE_NAME=bookchecker-app
+> ⚠️ ダミー値は **`export` せず、コマンドの前に置いてください**。環境変数は
+> `aws login` のプロファイルより優先されるため、`export` するとそのシェルの
+> 以降の AWS コマンドが全部 `InvalidClientTokenId` で失敗します。
+> 下の書き方なら変数はその 1 コマンドにしか効きません（bash / zsh / fish で確認済み）。
 
-aws dynamodb create-table \
-  --endpoint-url "$DYNAMO_ENDPOINT" \
-  --table-name "$DYNAMO_TABLE_NAME" \
-  --attribute-definitions \
-    AttributeName=PK,AttributeType=S \
-    AttributeName=SK,AttributeType=S \
-  --key-schema \
-    AttributeName=PK,KeyType=HASH \
-    AttributeName=SK,KeyType=RANGE \
-  --billing-mode PAY_PER_REQUEST
+```bash
+AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_DEFAULT_REGION=us-east-1 \
+  aws dynamodb create-table \
+    --endpoint-url http://127.0.0.1:8000 \
+    --table-name bookchecker-app \
+    --attribute-definitions \
+      AttributeName=PK,AttributeType=S \
+      AttributeName=SK,AttributeType=S \
+    --key-schema \
+      AttributeName=PK,KeyType=HASH \
+      AttributeName=SK,KeyType=RANGE \
+    --billing-mode PAY_PER_REQUEST
 ```
 
+`ResourceInUseException: Cannot create preexisting table` が出たら、すでに作成済みという
+意味なので、そのまま次へ進んで問題ありません。
+
 データはボリュームに永続化されるので、`dcc:up` で作り直してもテーブルは残ります。
-管理画面は <http://localhost:8001> です。
+状態の確認と管理画面 <http://localhost:8001> はこちら。
+
+```bash
+AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_DEFAULT_REGION=us-east-1 \
+  aws dynamodb describe-table \
+    --endpoint-url http://127.0.0.1:8000 \
+    --table-name bookchecker-app \
+    --query 'Table.TableStatus' --output text
+```
 
 作り直したいときだけ、削除してから上の `create-table` を再実行します。
 
 ```bash
-aws dynamodb delete-table --endpoint-url "$DYNAMO_ENDPOINT" --table-name "$DYNAMO_TABLE_NAME"
-aws dynamodb wait table-not-exists --endpoint-url "$DYNAMO_ENDPOINT" --table-name "$DYNAMO_TABLE_NAME"
+AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_DEFAULT_REGION=us-east-1 \
+  aws dynamodb delete-table \
+    --endpoint-url http://127.0.0.1:8000 --table-name bookchecker-app
 ```
 
 ### 4-2. エージェントと Next.js
@@ -691,14 +700,16 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 
 ### ローカル
 
-| 症状                                | 確認                                                                                                 |
-| ----------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `ResourceNotFoundException`         | [4-1](#4-1-dynamodb-local) の `create-table` を実行したか                                            |
-| `/api/sessions` が 401              | `.env.local` の `LOCAL_AUTH=1` を確認して Next.js を再起動                                           |
-| Podman が short-name を解決できない | `bun run dcc:up` を使い、`compose.podman.yml` が選ばれているか                                       |
-| エージェントが起動しない            | `aws sts get-caller-identity` と `.env` のモデル ID                                                  |
-| Bedrock が `AccessDeniedException`  | [3-4](#3-4-bedrock-のモデルアクセスを確認) のモデルアクセスと IAM 権限                               |
-| 保存時フォーマットが効かない        | oxc 拡張は起動時に `node_modules` の oxfmt を探すので、`bun install` 後に `Developer: Reload Window` |
+| 症状                                                        | 確認                                                                                                                                                        |
+| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ResourceNotFoundException`                                 | [4-1](#4-1-dynamodb-local) の `create-table` を実行したか                                                                                                   |
+| `InvalidClientTokenId` / `aws login` したのに認証が通らない | ダミー認証情報がシェルに残っている。fish は `set -e AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN`、bash は `unset`。新しいシェルを開いてもよい |
+| `ResourceInUseException` (create-table)                     | テーブル作成済み。無視して次へ                                                                                                                              |
+| `/api/sessions` が 401                                      | `.env.local` の `LOCAL_AUTH=1` を確認して Next.js を再起動                                                                                                  |
+| Podman が short-name を解決できない                         | `bun run dcc:up` を使い、`compose.podman.yml` が選ばれているか                                                                                              |
+| エージェントが起動しない                                    | `aws sts get-caller-identity` と `.env` のモデル ID                                                                                                         |
+| Bedrock が `AccessDeniedException`                          | [3-4](#3-4-bedrock-のモデルアクセスを確認) のモデルアクセスと IAM 権限                                                                                      |
+| 保存時フォーマットが効かない                                | oxc 拡張は起動時に `node_modules` の oxfmt を探すので、`bun install` 後に `Developer: Reload Window`                                                        |
 
 ### 本番
 
