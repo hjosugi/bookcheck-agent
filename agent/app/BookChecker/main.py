@@ -18,11 +18,23 @@ from calendar_tool import calendar_is_configured, make_calendar_tool
 MODEL_ID = os.getenv("BEDROCK_MODEL_ID", "us.amazon.nova-pro-v1:0")
 MEMORY_ID = os.getenv("MEMORY_BOOKCHECKERMEMORY_ID")
 
+# Hard cap on agent loop turns. Without it the model can retry a failing
+# browser selector indefinitely: one observed run made 80+ browser calls
+# with identical reasoning before giving up and inventing a book.
+MAX_TURNS = int(os.getenv("AGENT_MAX_TURNS", "15"))
+
+LIMIT_NOTICE = (
+    f"\n\n（操作が {MAX_TURNS} 回に達したので中断しました。"
+    "ページの構造が変わっていて目的の情報にたどり着けていません。"
+    "推測で埋めることはしないので、条件を変えてもう一度試してください。）"
+)
+
 SYSTEM_PROMPT = """あなたは技術書の新刊情報を調べるアシスタントです。
 
 ## 手順
 1. ブラウザで新刊カレンダー（https://www.sbcr.jp/calender/）にアクセス
-2. 「PC/IT書籍」カテゴリでフィルタし、技術書の新刊一覧を取得
+2. 「PC/IT書籍」カテゴリの新刊一覧を読み取る。カテゴリの絞り込み要素が
+   見つからない場合は、ページ本文を取得して技術書を拾う
 3. ユーザーの好みや指示に合う書籍を選ぶ
 4. カレンダーツールが利用可能なら、ユーザーに確認してから発売日を登録
 
@@ -31,6 +43,13 @@ SYSTEM_PROMPT = """あなたは技術書の新刊情報を調べるアシスタ�
 - カレンダーの予定名は書籍タイトル、説明欄は著者と概要にする
 - 終日予定として登録し、end_dateにはstart_dateの翌日を指定する
 - Markdownの表は使わず、箇条書きで簡潔に回答する
+
+## やってはいけないこと
+- 同じ操作を繰り返さない。同じセレクタで2回失敗したらその方法は捨て、
+  ページ本文の取得など別の手段に切り替える。3回試して駄目なら諦めて報告する
+- ページから実際に読み取れた情報だけを答える。書名・著者・発売日を推測や
+  記憶から補ってはいけない。取得できなかったときは「取得できなかった」と
+  はっきり伝え、何が起きたかを説明する
 """
 
 app = BedrockAgentCoreApp()
@@ -74,13 +93,21 @@ async def invoke(payload: dict[str, Any], context: Any):
     async def agent_stream() -> None:
         in_tool_use = False
         try:
-            async for event in agent.stream_async(prompt):
+            async for event in agent.stream_async(prompt, limits={"turns": MAX_TURNS}):
                 data = event.get("data")
                 if isinstance(data, str):
                     if in_tool_use:
                         await event_queue.put({"type": "tool_result"})
                         in_tool_use = False
                     await event_queue.put({"type": "text", "data": data})
+                elif "result" in event:
+                    # Terminal event. A turn cap trip looks like a normal stop to
+                    # the UI, so say what happened instead of ending mid-thought.
+                    if getattr(event["result"], "stop_reason", "") == "limit_turns":
+                        if in_tool_use:
+                            await event_queue.put({"type": "tool_result"})
+                            in_tool_use = False
+                        await event_queue.put({"type": "text", "data": LIMIT_NOTICE})
                 elif "current_tool_use" in event:
                     if in_tool_use:
                         await event_queue.put({"type": "tool_result"})

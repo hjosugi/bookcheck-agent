@@ -21,6 +21,11 @@ export default function Page() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  // Bumped on every "new chat" click. Without it the click is a no-op
+  // whenever activeId is already null (a fresh load, or a new chat that
+  // has not been sent yet): setActiveId(null) changes nothing, so the
+  // Chat key stays the same and the component never remounts.
+  const [newChatNonce, setNewChatNonce] = useState(0)
 
   // Fetch only. The caller decides what to do with the result.
   const fetchSessions = useCallback(async (): Promise<SessionSummary[]> => {
@@ -62,10 +67,11 @@ export default function Page() {
     return data.session
   }, [])
 
-  const handleNew = async () => {
+  const handleNew = () => {
     // A new chat starts empty. The session row is created on
     // the first message, not here. This avoids empty sessions.
     setActiveId(null)
+    setNewChatNonce((n) => n + 1)
     setSidebarOpen(false)
   }
 
@@ -111,7 +117,7 @@ export default function Page() {
 
       <main className="main">
         <Chat
-          key={activeId ?? 'new'}
+          key={activeId ?? `new-${newChatNonce}`}
           session={activeSession}
           ensureSession={createSession}
           onSessionTouched={refreshSessions}
