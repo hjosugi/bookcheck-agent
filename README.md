@@ -284,13 +284,13 @@ cp handson-memo.txt handson-memo.local.txt
 
 | #   | 値                           | 生まれる場所                | 使う場所                 |
 | --- | ---------------------------- | --------------------------- | ------------------------ |
-| 1   | クレデンシャルプロバイダー名 | 7. Google 連携              | ランタイム環境変数       |
-| 2   | ランタイム ARN               | 9. エージェントデプロイ後   | Amplify 環境変数         |
-| 3   | ランタイム ID                | ARN の `runtime/` 以降      | ワークロード ID 更新 CLI |
-| 4   | Amplify ドメイン URL         | 10. Web デプロイ後          | コールバック URL の材料  |
-| 5   | コールバック URL             | #4 + `/api/oauth2/callback` | **2 か所**に設定         |
-| 6   | Cognito ユーザープール ID    | 10. Web デプロイ後          | 検出 URL に埋め込む      |
-| 7   | Cognito クライアント ID      | 10. Web デプロイ後          | 許可されたクライアント   |
+| 1   | クレデンシャルプロバイダー名 | [7-5][memo1]                | ランタイム環境変数       |
+| 2   | ランタイム ARN               | [9-1][memo2]                | Amplify 環境変数         |
+| 3   | ランタイム ID                | [9-1][memo3] の ARN 末尾    | ワークロード ID 更新 CLI |
+| 4   | Amplify ドメイン URL         | [10-1][memo4]               | コールバック URL の材料  |
+| 5   | コールバック URL             | [10-1][memo5] で #4 に付す  | **2 か所**に設定         |
+| 6   | Cognito ユーザープール ID    | [10-1][memo6]               | 検出 URL に埋め込む      |
+| 7   | Cognito クライアント ID      | [10-1][memo7]               | 許可されたクライアント   |
 
 センシティブな値なので、GitHub には絶対にプッシュしないでください。
 
@@ -312,7 +312,7 @@ cp handson-memo.txt handson-memo.local.txt
 **AgentCore アイデンティティ**です。Google のクライアント ID とシークレットを
 先に預けておくと、エージェント側は `@requires_access_token` を付けるだけで済みます。
 
-ゴールは **プロバイダー名（[メモ #1][memo]）を手に入れること**です。
+ゴールは **プロバイダー名（[メモ #1][memo1]）を手に入れること**です。
 
 ### 7-1. Google Cloud プロジェクトを作る
 
@@ -369,7 +369,7 @@ Amazon Bedrock AgentCore →「アイデンティティ」→「OAuth クライ�
 
 | 項目                           | 値                                                 |
 | ------------------------------ | -------------------------------------------------- |
-| 名前                           | `google-oauth-client`（**これが[メモ #1][memo]**） |
+| 名前                           | `google-oauth-client`（**これが メモ #1**）        |
 | プロバイダータイプ             | Google                                             |
 | クライアント ID / シークレット | 7-4 の値                                           |
 
@@ -386,8 +386,8 @@ Google Cloud の「認証情報」→ `bookchecker-agentcore` →
 「承認済みのリダイレクト URI」→「URI を追加」→ 7-5 の URI を貼って保存。
 反映に数分かかることがあります。
 
-> この URI と、あとで出てくる**コールバック URL（[メモ #5][memo]）は別物**です。
-> [メモ #5][memo] は自分の Amplify アプリの `/api/oauth2/callback` で、登録先は
+> この URI と、あとで出てくる**コールバック URL（[メモ #5][memo5]）は別物**です。
+> [メモ #5][memo5] は自分の Amplify アプリの `/api/oauth2/callback` で、登録先は
 > 「ランタイム環境変数」と「ワークロード ID」の 2 か所。
 > 一方この URI は AgentCore 自身のもので、登録先は Google だけです。
 > 混同すると [11. 結線](#11-結線) で必ず詰まります。
@@ -397,7 +397,7 @@ Google Cloud の「認証情報」→ `bookchecker-agentcore` →
 - [ ] Google Calendar API が有効
 - [ ] スコープに `calendar.events` がある
 - [ ] テストユーザーに自分のアカウントが入っている
-- [ ] AgentCore にプロバイダーができ、**名前を[メモ #1][memo] に控えた**
+- [ ] AgentCore にプロバイダーができ、**名前を[メモ #1][memo1] に控えた**
 - [ ] Google の承認済みリダイレクト URI に AgentCore の URI を保存した
 
 ---
@@ -464,9 +464,9 @@ AgentCore ランタイムにデプロイされます。同時に AgentCore メ�
 ### 9-1. ランタイム ARN を控える（メモ #2, #3）
 
 AgentCore コンソール →「ランタイム」→ `agent_BookChecker` → 画面上部の
-「ランタイム ARN」をコピーして[メモ #2][memo]へ。
+「ランタイム ARN」をコピーして メモ #2 へ。
 ARN の `runtime/` 以降（例: `agent_BookChecker-XXXXXXXXXX`）が
-[メモ #3][memo]のランタイム ID です。
+メモ #3 のランタイム ID です。
 
 ### 9-2. ブラウザツール用の IAM 権限
 
@@ -522,7 +522,7 @@ AWS Amplify を開き、`us-east-1` にいることを確認して「アプリ�
 
 | キー                    | 値                               |
 | ----------------------- | -------------------------------- |
-| `NEXT_PUBLIC_AGENT_ARN` | [メモ #2][memo] のランタイム ARN |
+| `NEXT_PUBLIC_AGENT_ARN` | [メモ #2][memo2] のランタイム ARN |
 | `DYNAMO_TABLE_NAME`     | `bookchecker-app`                |
 | `AWS_REGION`            | `us-east-1`                      |
 
@@ -549,19 +549,19 @@ AmplifyError [UnsupportedPackageManagerError]: Package manager bun is not suppor
 
 ### 10-1. 値を 3 つ控える（メモ #4, #6, #7）
 
-- **ドメイン URL**（[メモ #4][memo]）: `https://main.xxxxxxxxxx.amplifyapp.com`
+- **ドメイン URL**（メモ #4）: `https://main.xxxxxxxxxx.amplifyapp.com`
 - `main` ブランチ →「デプロイされたバックエンドのリソース」→ `AWS::Cognito::UserPool`
   のリンクから Cognito コンソールへ
-- **ユーザープール ID**（[メモ #6][memo]）: 「ユーザープール情報」
-- **クライアント ID**（[メモ #7][memo]）: 左メニュー「アプリケーションクライアント」
+- **ユーザープール ID**（メモ #6）: 「ユーザープール情報」
+- **クライアント ID**（メモ #7）: 左メニュー「アプリケーションクライアント」
 
-ここで**コールバック URL**（[メモ #5][memo]）も作ります。ドメイン URL にパスを足すだけです。
+ここで**コールバック URL**（メモ #5）も作ります。ドメイン URL にパスを足すだけです。
 
 ```text
 https://main.xxxxxxxxxx.amplifyapp.com/api/oauth2/callback
 ```
 
-[メモ #6][memo] と [#7][memo] が確定したら、Amplify の環境変数に `COGNITO_USER_POOL_ID` と
+[メモ #6][memo6] と [#7][memo7] が確定したら、Amplify の環境変数に `COGNITO_USER_POOL_ID` と
 `COGNITO_CLIENT_ID` も追加します（全量は `.env.production.example` を参照）。
 
 **チェックポイント**: ドメイン URL で Cognito のサインアップ画面が出ること。
@@ -644,7 +644,7 @@ pnpm run agent:deploy
 > （`Environment variables cannot start with the reserved prefix "AWS"`）。
 > リージョンはランタイムが `AWS_REGION` を用意するので、書く必要はありません。
 
-> [メモ #6][memo] と [#7][memo] はブラウザに配られる公開識別子で秘密ではありませんが、
+> [メモ #6][memo6] と [#7][memo7] はブラウザに配られる公開識別子で秘密ではありませんが、
 > このリポジトリは public なので、Cognito のセルフサインアップは
 > [`amplify/backend.ts`](amplify/backend.ts) で閉じてあります。
 > ユーザーの作り方は [12. 動作確認](#12-動作確認)を参照。
@@ -666,13 +666,13 @@ aws bedrock-agentcore-control update-workload-identity \
 
 新しい作業ではなく [7-6](#7-6-google-側にリダイレクト-uri-を登録する) の確認です。
 Google の「認証情報」→ `bookchecker-agentcore` に、**AgentCore 自身の URI** が
-保存されているかを見てください。[メモ #5][memo] をここに入れてしまう取り違えが多いです。
+保存されているかを見てください。[メモ #5][memo5] をここに入れてしまう取り違えが多いです。
 
 **結線の最終確認**
 
 - [ ] コールバック URL が「ランタイム環境変数」と「ワークロード ID」で**完全に同じ文字列**
-- [ ] 検出 URL のユーザープール ID が[メモ #6][memo] と一致
-- [ ] 許可されたクライアントが[メモ #7][memo] と一致
+- [ ] 検出 URL のユーザープール ID が[メモ #6][memo6] と一致
+- [ ] 許可されたクライアントが[メモ #7][memo7] と一致
 - [ ] Amplify のコンピューティングロールが設定済み
 
 ---
@@ -789,7 +789,7 @@ CDK が注入する `MEMORY_*` だけ、`AuthorizerConfiguration` に至って�
 
 [9-2](#9-2-ブラウザツール用の-iam-権限を足す) と
 [11-2](#11-2-ランタイムの環境変数と-jwt-認証) は `agentcore.json` 側にあるので不要です。
-[メモ #1][memo] のクレデンシャルプロバイダーはスタック管理外なので残ります。
+[メモ #1][memo1] のクレデンシャルプロバイダーはスタック管理外なので残ります。
 ただし AgentCore メモリーは作り直しになるため、それまでの会話と好みは消えます。
 
 フロントエンドの修正は GitHub に push するだけで Amplify が自動再デプロイします。
@@ -870,9 +870,9 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 
 | 症状                                                                             | 確認                                                                                                                        |
 | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 「考え中…」のまま返らない                                                        | Amplify とランタイム両方の環境変数。JWT のユーザープール ID / クライアント ID が[メモ #6][memo] [#7][memo] と一致しているか |
+| 「考え中…」のまま返らない                                                        | Amplify とランタイム両方の環境変数。JWT のユーザープール ID / クライアント ID が[メモ #6][memo6] [#7][memo7] と一致しているか |
 | エージェントがブラウザを使えない                                                 | ランタイム実行ロールに 2 つのポリシー（[9-2](#9-2-ブラウザツール用の-iam-権限を足す)）                                      |
-| Google 連携に失敗する                                                            | [メモ #5][memo] がランタイム環境変数とワークロード ID の**2 か所**に同じ値で入っているか                                    |
+| Google 連携に失敗する                                                            | [メモ #5][memo5] がランタイム環境変数とワークロード ID の**2 か所**に同じ値で入っているか                                    |
 | カレンダー登録だけ 403                                                           | Google Calendar API が有効か、テストユーザーに自分が入っているか                                                            |
 | ビルドが失敗する                                                                 | Amplify の `main` ブランチのカードから「ビルド」「デプロイ」ログ                                                            |
 | Amplify の `backend` フェーズが `Package manager bun is not supported.` で落ちる | `ampx` は bun を受け付けません。`amplify.yml` が `pnpm exec ampx` を使っているか（[10](#10-web-アプリをデプロイ)）          |
@@ -978,4 +978,10 @@ Next.js を経由させれば `Last-Event-ID` による真の再開ができま�
 3. `@requires_access_token` が `@tool` の**内側**にある。
    外側だとトークン引数が LLM に見えてしまうため
 
-[memo]: #6-メモ帳を用意する
+[memo1]: #7-5-agentcore-にクレデンシャルプロバイダーを登録する
+[memo2]: #9-1-ランタイム-arn-を控えるメモ-2-3
+[memo3]: #9-1-ランタイム-arn-を控えるメモ-2-3
+[memo4]: #10-1-値を-3-つ控えるメモ-4-6-7
+[memo5]: #10-1-値を-3-つ控えるメモ-4-6-7
+[memo6]: #10-1-値を-3-つ控えるメモ-4-6-7
+[memo7]: #10-1-値を-3-つ控えるメモ-4-6-7
