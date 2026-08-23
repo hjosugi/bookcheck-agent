@@ -110,6 +110,11 @@ pnpm run setup
 pnpm run setup:check
 ```
 
+`agent/agentcore/cdk/` だけは pnpm workspace に含めていません。AgentCore CLI が
+そのディレクトリで `npm install` を直接実行するためです。理由は
+[`agent/agentcore/cdk/README.md`](agent/agentcore/cdk/README.md) に書いてあります。
+このディレクトリは `agentcore` コマンドが面倒を見るので、手で触る必要はありません。
+
 ### 3-3. 設定ファイルを作る
 
 `.env` と `aws-targets.json` は `.gitignore` に入っています（このリポジトリは
@@ -164,8 +169,8 @@ localhost:8001   dynamodb-admin
 Podman があれば `compose.podman.yml`、無ければ `compose.yml` を自動で選びます。
 
 ```bash
-pnpm run dcc:up
-pnpm run dcc:ps
+pnpm run dc:up
+pnpm run dc:ps
 ```
 
 初回のみテーブルを作成、AWS CLIはdummy設定。
@@ -872,7 +877,7 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 | `InvalidClientTokenId` / `aws login` したのに認証が通らない | ダミー認証情報がシェルに残っている。fish は `set -e AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN`、bash は `unset`。新しいシェルを開いてもよい |
 | `ResourceInUseException` (create-table)                     | テーブル作成済み。無視して次へ                                                                                                                              |
 | `/api/sessions` が 401                                      | `.env.local` の `LOCAL_AUTH=1` を確認して Next.js を再起動                                                                                                  |
-| Podman が short-name を解決できない                         | `pnpm run dcc:up` を使い、`compose.podman.yml` が選ばれているか                                                                                             |
+| Podman が short-name を解決できない                         | `pnpm run dc:up` を使い、`compose.podman.yml` が選ばれているか                                                                                              |
 | エージェントが起動しない                                    | `aws sts get-caller-identity` と `.env` のモデル ID                                                                                                         |
 | Bedrock が `AccessDeniedException`                          | [3-4](#3-4-bedrock-のモデルアクセスを確認) のモデルアクセスと IAM 権限                                                                                      |
 | 保存時フォーマットが効かない                                | oxc 拡張は起動時に `node_modules` の oxfmt を探すので、`pnpm install` 後に `Developer: Reload Window`                                                       |
@@ -904,7 +909,7 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 | `pnpm run setup:check`                                      | 必要なツールが揃っているか確認                 |
 | `pnpm run dev`                                              | Next.js をローカル起動                         |
 | `pnpm run agent:local`                                      | Python エージェントをポート 8080 で起動        |
-| `pnpm run dcc:up` / `dcc:down` / `dcc:ps` / `dcc:logs`      | ローカルコンテナ                               |
+| `pnpm run dc:up` / `dc:down` / `dc:ps` / `dc:logs`          | ローカルコンテナ                               |
 | `pnpm run test` / `test:watch` / `test:cov`                 | アプリのテスト                                 |
 | `pnpm run fmt` / `fmt:check` / `lint` / `typecheck`         | 整形と静的検査                                 |
 | `pnpm run check`                                            | 上記すべて + infra テスト                      |

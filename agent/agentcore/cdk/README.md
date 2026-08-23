@@ -20,9 +20,16 @@ This CDK project is managed by the AgentCore CLI. It deploys your agent infrastr
 - `npx cdk deploy` deploy this stack to your default AWS account/region
 - `npx cdk diff` compare deployed stack with current state
 
-The AgentCore CLI currently runs `npm install` in this directory when it synchronizes
-its managed dependencies. Keep using npm and commit `package-lock.json` here until the
-CLI supports selecting pnpm or another package manager.
+**This directory is the one place in the repository that is not on pnpm.**
+
+The rest of the repo uses pnpm (`pnpm-workspace.yaml` at the root). This directory
+is deliberately left out of that workspace: `@aws/agentcore` 0.27.1 hard-codes
+`npm install` here when it synchronizes its managed dependencies, with no package
+manager detection. Putting pnpm in charge would leave two lockfiles fighting and
+have the CLI's npm install overwrite pnpm's layout on every deploy.
+
+So: keep using npm here, and keep `package-lock.json` committed. Revisit when the
+CLI lets you choose a package manager.
 
 ## Usage
 

@@ -1,5 +1,9 @@
 # bun の package.json "workspaces" に相当する。pnpm は専用ファイルで指定する。
 # pnpm 11 は .npmrc ではなくこのファイルから設定を読む。
+#
+# agent/agentcore/cdk はここに入れない。AgentCore CLI が同ディレクトリで
+# `npm install` を直接実行するため（0.27.1 時点でハードコード、パッケージ
+# マネージャーの検出なし）、pnpm に管理させると npm と競合する。
 packages:
   - infra
 
@@ -13,10 +17,9 @@ storeDir: .pnpm-store
 
 # pnpm 10 以降は依存パッケージのインストールスクリプトを既定で実行しない。
 # bun は実行していたので、動作に必要なものだけ明示的に許可して差を埋める。
-# core-js は寄付の案内を出すだけなので許可しない。
 allowBuilds:
   '@aws/agentcore': true # agentcore CLI（package.json の agent:* スクリプト）
   '@parcel/watcher': true # ネイティブ拡張（ampx sandbox のファイル監視）
   esbuild: true # プラットフォーム別バイナリの配置
-  protobufjs: true # 生成物の準備
-  core-js: false
+  core-js: false # 寄付の案内を出すだけ
+  protobufjs: false # 依存側のバージョン指定を警告するだけで、生成物は作らない
