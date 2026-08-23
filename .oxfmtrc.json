@@ -1,5 +1,5 @@
 {
-  "ignorePatterns": ["next-env.d.ts"],
+  "ignorePatterns": ["next-env.d.ts", "agent/agentcore/.cli/**"],
   "singleQuote": true,
   "semi": false,
   "trailingComma": "all",

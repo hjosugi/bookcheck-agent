@@ -16,10 +16,7 @@
       "runtimeVersion": "PYTHON_3_12",
       "networkMode": "PUBLIC",
       "protocol": "HTTP",
-      "envVars": [
-        { "name": "CREDENTIAL_PROVIDER_NAME", "value": "google-oauth-client" },
-        { "name": "AWS_DEFAULT_REGION", "value": "us-east-1" }
-      ],
+      "envVars": [{ "name": "CREDENTIAL_PROVIDER_NAME", "value": "google-oauth-client" }],
       "additionalPolicies": [
         "arn:aws:iam::aws:policy/AmazonBedrockFullAccess",
         "arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess"

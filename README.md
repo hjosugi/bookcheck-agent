@@ -307,7 +307,7 @@ cp handson-memo.txt handson-memo.local.txt
 **AgentCore アイデンティティ**です。Google のクライアント ID とシークレットを
 先に預けておくと、エージェント側は `@requires_access_token` を付けるだけで済みます。
 
-ゴールは **プロバイダー名（メモ #1）を手に入れること**です。
+ゴールは **プロバイダー名（[メモ #1][memo]）を手に入れること**です。
 
 ### 7-1. Google Cloud プロジェクトを作る
 
@@ -362,11 +362,11 @@ AWS マネジメントコンソールが `us-east-1` であることを確認し
 Amazon Bedrock AgentCore →「アイデンティティ」→「OAuth クライアント/API キー」→
 「OAuth クライアントを追加」。
 
-| 項目                           | 値                                         |
-| ------------------------------ | ------------------------------------------ |
-| 名前                           | `google-oauth-client`（**これがメモ #1**） |
-| プロバイダータイプ             | Google                                     |
-| クライアント ID / シークレット | 7-4 の値                                   |
+| 項目                           | 値                                                 |
+| ------------------------------ | -------------------------------------------------- |
+| 名前                           | `google-oauth-client`（**これが[メモ #1][memo]**） |
+| プロバイダータイプ             | Google                                             |
+| クライアント ID / シークレット | 7-4 の値                                           |
 
 名前はあとで環境変数に一字一句そのまま貼るので、記号やスペースを入れず、
 控えた文字列と完全に一致させてください。
@@ -381,8 +381,8 @@ Google Cloud の「認証情報」→ `bookchecker-agentcore` →
 「承認済みのリダイレクト URI」→「URI を追加」→ 7-5 の URI を貼って保存。
 反映に数分かかることがあります。
 
-> この URI と、あとで出てくる**コールバック URL（メモ #5）は別物**です。
-> メモ #5 は自分の Amplify アプリの `/api/oauth2/callback` で、登録先は
+> この URI と、あとで出てくる**コールバック URL（[メモ #5][memo]）は別物**です。
+> [メモ #5][memo] は自分の Amplify アプリの `/api/oauth2/callback` で、登録先は
 > 「ランタイム環境変数」と「ワークロード ID」の 2 か所。
 > 一方この URI は AgentCore 自身のもので、登録先は Google だけです。
 > 混同すると [11. 結線](#11-結線) で必ず詰まります。
@@ -392,7 +392,7 @@ Google Cloud の「認証情報」→ `bookchecker-agentcore` →
 - [ ] Google Calendar API が有効
 - [ ] スコープに `calendar.events` がある
 - [ ] テストユーザーに自分のアカウントが入っている
-- [ ] AgentCore にプロバイダーができ、**名前をメモ #1 に控えた**
+- [ ] AgentCore にプロバイダーができ、**名前を[メモ #1][memo] に控えた**
 - [ ] Google の承認済みリダイレクト URI に AgentCore の URI を保存した
 
 ---
@@ -411,8 +411,7 @@ DynamoDB テーブルと IAM ポリシーは `infra/`（AWS CDK）に定義済�
 
 違いは `infra/lib/env-config.ts` だけに書かれています。スタック側ではなくそこを直してください。
 
-このスタックは AgentCore ランタイムも Amplify も Cognito も**作りません**。
-それらは後の手順で作るので、このスタックだけを独立して作り直せます。
+このスタックはdyanamoのみ作成
 
 ```bash
 bun run infra:test
@@ -455,38 +454,50 @@ bun run agent:status
 AgentCore ランタイムにデプロイされます。同時に AgentCore メモリーも作られます。
 
 ブラウザツールが Playwright を使うため、ビルドは `CodeZip` ではなく
-**`Container`** です（ZIP 展開では実行権限が失われるため）。
+**`Container`** （ZIP 展開では実行権限が失われるため）。
 
 ### 9-1. ランタイム ARN を控える（メモ #2, #3）
 
 AgentCore コンソール →「ランタイム」→ `agent_BookChecker` → 画面上部の
-「ランタイム ARN」をコピーしてメモ #2 へ。
-ARN の `runtime/` 以降（例: `agent_BookChecker-XXXXXXXXXX`）がメモ #3 のランタイム ID です。
+「ランタイム ARN」をコピーして[メモ #2][memo]へ。
+ARN の `runtime/` 以降（例: `agent_BookChecker-XXXXXXXXXX`）が
+[メモ #3][memo]のランタイム ID です。
 
-### 9-2. ブラウザツール用の IAM 権限を足す
+### 9-2. ブラウザツール用の IAM 権限
 
-`agentcore deploy` はモデル呼び出しやログ、メモリー関連の権限を自動付与しますが、
-**ブラウザツールの権限だけは既定では付きません**。
+**この節に手作業はありません。** 何が設定済みかの説明です。
 
-このリポジトリでは
+`agentcore deploy` はランタイム実行ロールを作り、モデル呼び出し・ログ・メモリーの
+権限を自動で付けます。ブラウザツールの権限はそこに含まれないので、
 [`agent/agentcore/agentcore.json`](agent/agentcore/agentcore.json) の
-`runtimes[].additionalPolicies` に次の 2 つを書いてあるので、
-`agentcore deploy` がランタイム実行ロールへ自動でアタッチします。
-コンソールでの手作業は不要です。
+`runtimes[].additionalPolicies` で 2 つのマネージドポリシーを足してあります。
 
-- `AmazonBedrockFullAccess`
-- `BedrockAgentCoreFullAccess`
-
-付いているかは実行ロール名を控えて確認できます
-（ロール名はランタイム詳細 →「バージョン1」→「許可」に出ます）。
-
-```bash
-aws iam list-attached-role-policies --role-name <ランタイム実行ロール名>
+```json
+"additionalPolicies": [
+  "arn:aws:iam::aws:policy/AmazonBedrockFullAccess",
+  "arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess"
+]
 ```
 
-> 2 つとも AWS マネージドポリシーで範囲が広めです。最小権限に寄せる場合は
-> `additionalPolicies` にポリシー JSON のパス（`codeLocation` からの相対）を
-> 書けば、インラインポリシーとしてアタッチされます。
+デプロイのたびに CloudFormation が実行ロールへアタッチします。確認するなら:
+
+```fish
+set -l STACK AgentCore-BookcheckAgent-prod
+
+set -l ROLE (aws cloudformation describe-stack-resources \
+  --stack-name $STACK --region us-east-1 \
+  --query "StackResources[?contains(LogicalResourceId,'RuntimeExecutionRole')].PhysicalResourceId" \
+  --output text)
+
+aws iam list-attached-role-policies --role-name $ROLE \
+  --query "AttachedPolicies[].PolicyName" --output text
+```
+
+`AmazonBedrockFullAccess` と `BedrockAgentCoreFullAccess` が並べば正常です。
+
+> どちらも範囲の広い AWS マネージドポリシーです。最小権限に寄せたいときは、
+> `additionalPolicies` の要素を ARN ではなくポリシー JSON のパス
+> （`codeLocation` からの相対）にすると、インラインポリシーとして付きます。
 
 ---
 
@@ -504,31 +515,37 @@ AWS Amplify を開き、`us-east-1` にいることを確認して「アプリ�
 2. リポジトリと `main` ブランチを選択
 3. 「詳細設定」で環境変数を追加
 
-| キー                    | 値                       |
-| ----------------------- | ------------------------ |
-| `NEXT_PUBLIC_AGENT_ARN` | メモ #2 のランタイム ARN |
-| `DYNAMO_TABLE_NAME`     | `bookchecker-app`        |
-| `AWS_REGION`            | `us-east-1`              |
+| キー                    | 値                               |
+| ----------------------- | -------------------------------- |
+| `NEXT_PUBLIC_AGENT_ARN` | [メモ #2][memo] のランタイム ARN |
+| `DYNAMO_TABLE_NAME`     | `bookchecker-app`                |
+| `AWS_REGION`            | `us-east-1`                      |
 
 4. 「保存してデプロイ」
 
 Next.js が SSR モードで検出され、6〜7 分でビルドが終わります。
 
+ビルド設定はリポジトリの [`amplify.yml`](amplify.yml) が使われるので、コンソール側で
+編集する必要はありません。Amplify のビルドイメージに bun は入っていないため、
+`preBuild` で `npm install -g bun@…` を実行しています。バージョンは
+`package.json` の `packageManager` から引くので、bun を上げるときも
+`amplify.yml` を触る必要はありません。
+
 ### 10-1. 値を 3 つ控える（メモ #4, #6, #7）
 
-- **ドメイン URL**（メモ #4）: `https://main.xxxxxxxxxx.amplifyapp.com`
+- **ドメイン URL**（[メモ #4][memo]）: `https://main.xxxxxxxxxx.amplifyapp.com`
 - `main` ブランチ →「デプロイされたバックエンドのリソース」→ `AWS::Cognito::UserPool`
   のリンクから Cognito コンソールへ
-- **ユーザープール ID**（メモ #6）: 「ユーザープール情報」
-- **クライアント ID**（メモ #7）: 左メニュー「アプリケーションクライアント」
+- **ユーザープール ID**（[メモ #6][memo]）: 「ユーザープール情報」
+- **クライアント ID**（[メモ #7][memo]）: 左メニュー「アプリケーションクライアント」
 
-ここで**コールバック URL**（メモ #5）も作ります。ドメイン URL にパスを足すだけです。
+ここで**コールバック URL**（[メモ #5][memo]）も作ります。ドメイン URL にパスを足すだけです。
 
 ```text
 https://main.xxxxxxxxxx.amplifyapp.com/api/oauth2/callback
 ```
 
-メモ #6 と #7 が確定したら、Amplify の環境変数に `COGNITO_USER_POOL_ID` と
+[メモ #6][memo] と [#7][memo] が確定したら、Amplify の環境変数に `COGNITO_USER_POOL_ID` と
 `COGNITO_CLIENT_ID` も追加します（全量は `.env.production.example` を参照）。
 
 **チェックポイント**: ドメイン URL で Cognito のサインアップ画面が出ること。
@@ -580,15 +597,14 @@ CloudFormation に上書きされて消えます（[★ 再デプロイ時の落
 [`agent/agentcore/agentcore.json`](agent/agentcore/agentcore.json) に書いて
 デプロイし直すのが正解です。
 
-`CREDENTIAL_PROVIDER_NAME` と `AWS_DEFAULT_REGION` は最初から入っているので、
-`envVars` に `CALLBACK_URL` を足し、`authorizerType` と
-`authorizerConfiguration` を新しく足します。
+`CREDENTIAL_PROVIDER_NAME` は最初から入っているので、`envVars` に
+`CALLBACK_URL` を足し、`authorizerType` と `authorizerConfiguration` を
+新しく足します。
 
 ```jsonc
 // agent/agentcore/agentcore.json の runtimes[0]
 "envVars": [
   { "name": "CREDENTIAL_PROVIDER_NAME", "value": "google-oauth-client" },
-  { "name": "AWS_DEFAULT_REGION", "value": "us-east-1" },
   { "name": "CALLBACK_URL", "value": "<メモ#5>" }
 ],
 "authorizerType": "CUSTOM_JWT",
@@ -610,7 +626,11 @@ bun run agent:deploy
 これで Cognito でログインしたユーザーだけがエージェントを呼べます。
 `MEMORY_BOOKCHECKERMEMORY_ID` は CDK が自動で注入するので、書く必要はありません。
 
-> メモ #6 と #7 はブラウザに配られる公開識別子で秘密ではありませんが、
+> `AWS` で始まる名前の環境変数は AgentCore が受け付けません
+> （`Environment variables cannot start with the reserved prefix "AWS"`）。
+> リージョンはランタイムが `AWS_REGION` を用意するので、書く必要はありません。
+
+> [メモ #6][memo] と [#7][memo] はブラウザに配られる公開識別子で秘密ではありませんが、
 > このリポジトリは public なので、Cognito のセルフサインアップは
 > [`amplify/backend.ts`](amplify/backend.ts) で閉じてあります。
 > ユーザーの作り方は [12. 動作確認](#12-動作確認)を参照。
@@ -632,13 +652,13 @@ aws bedrock-agentcore-control update-workload-identity \
 
 新しい作業ではなく [7-6](#7-6-google-側にリダイレクト-uri-を登録する) の確認です。
 Google の「認証情報」→ `bookchecker-agentcore` に、**AgentCore 自身の URI** が
-保存されているかを見てください。メモ #5 をここに入れてしまう取り違えが多いです。
+保存されているかを見てください。[メモ #5][memo] をここに入れてしまう取り違えが多いです。
 
 **結線の最終確認**
 
 - [ ] コールバック URL が「ランタイム環境変数」と「ワークロード ID」で**完全に同じ文字列**
-- [ ] 検出 URL のユーザープール ID がメモ #6 と一致
-- [ ] 許可されたクライアントがメモ #7 と一致
+- [ ] 検出 URL のユーザープール ID が[メモ #6][memo] と一致
+- [ ] 許可されたクライアントが[メモ #7][memo] と一致
 - [ ] Amplify のコンピューティングロールが設定済み
 
 ---
@@ -755,7 +775,7 @@ CDK が注入する `MEMORY_*` だけ、`AuthorizerConfiguration` に至って�
 
 [9-2](#9-2-ブラウザツール用の-iam-権限を足す) と
 [11-2](#11-2-ランタイムの環境変数と-jwt-認証) は `agentcore.json` 側にあるので不要です。
-メモ #1 のクレデンシャルプロバイダーはスタック管理外なので残ります。
+[メモ #1][memo] のクレデンシャルプロバイダーはスタック管理外なので残ります。
 ただし AgentCore メモリーは作り直しになるため、それまでの会話と好みは消えます。
 
 フロントエンドの修正は GitHub に push するだけで Amplify が自動再デプロイします。
@@ -834,13 +854,14 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 
 ### 本番
 
-| 症状                             | 確認                                                                                                        |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| 「考え中…」のまま返らない        | Amplify とランタイム両方の環境変数。JWT のユーザープール ID / クライアント ID がメモ #6 #7 と一致しているか |
-| エージェントがブラウザを使えない | ランタイム実行ロールに 2 つのポリシー（[9-2](#9-2-ブラウザツール用の-iam-権限を足す)）                      |
-| Google 連携に失敗する            | メモ #5 がランタイム環境変数とワークロード ID の**2 か所**に同じ値で入っているか                            |
-| カレンダー登録だけ 403           | Google Calendar API が有効か、テストユーザーに自分が入っているか                                            |
-| ビルドが失敗する                 | Amplify の `main` ブランチのカードから「ビルド」「デプロイ」ログ                                            |
+| 症状                                            | 確認                                                                                                                        |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 「考え中…」のまま返らない                       | Amplify とランタイム両方の環境変数。JWT のユーザープール ID / クライアント ID が[メモ #6][memo] [#7][memo] と一致しているか |
+| エージェントがブラウザを使えない                | ランタイム実行ロールに 2 つのポリシー（[9-2](#9-2-ブラウザツール用の-iam-権限を足す)）                                      |
+| Google 連携に失敗する                           | [メモ #5][memo] がランタイム環境変数とワークロード ID の**2 か所**に同じ値で入っているか                                    |
+| カレンダー登録だけ 403                          | Google Calendar API が有効か、テストユーザーに自分が入っているか                                                            |
+| ビルドが失敗する                                | Amplify の `main` ブランチのカードから「ビルド」「デプロイ」ログ                                                            |
+| Amplify が `bun: command not found`（exit 127） | コンソール側のビルド設定がリポジトリの [`amplify.yml`](amplify.yml) を上書きしていないか。bun は `preBuild` で入れています  |
 
 エラーの原因が分からないときは、コードとエラーメッセージを添えて AI に聞くのが速いです
 （機密情報は送らないこと）。AgentCore と Strands はアップデートが速いので、
@@ -941,3 +962,5 @@ Next.js を経由させれば `Last-Event-ID` による真の再開ができま�
 2. ツール関数が `async def` になっている。認可待ちの間もストリーミングを止めないため
 3. `@requires_access_token` が `@tool` の**内側**にある。
    外側だとトークン引数が LLM に見えてしまうため
+
+[memo]: #6-メモ帳を用意する

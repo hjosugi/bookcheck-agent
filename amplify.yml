@@ -1,12 +1,21 @@
 version: 1
 backend:
   phases:
+    preBuild:
+      commands:
+        - npm install -g bun@$(node -p "require('./package.json').packageManager.split('@')[1]")
+        - node --version
+        - bun --version
     build:
       commands:
         - bun install --frozen-lockfile
         - bunx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
   phases:
+    preBuild:
+      commands:
+        - npm install -g bun@$(node -p "require('./package.json').packageManager.split('@')[1]")
+        - bun install --frozen-lockfile
     build:
       commands:
         - bun run build
