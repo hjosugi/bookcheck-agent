@@ -1,6 +1,8 @@
 .env.local
 cdk/cdk.out/
 cdk/node_modules/
+cdk/dist/
+cdk/.cdk.staging/
 .cli/*
 .cache/*
 !.cli/deployed-state.json

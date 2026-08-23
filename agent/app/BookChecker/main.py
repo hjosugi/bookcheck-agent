@@ -91,9 +91,11 @@ async def invoke(payload: dict[str, Any], context: Any):
     )
 
     async def agent_stream() -> None:
+        # For Debug output agent message to console
         in_tool_use = False
         try:
             async for event in agent.stream_async(prompt, limits={"turns": MAX_TURNS}):
+                print(f"[DEBUG] agent_stream: event={event}")
                 data = event.get("data")
                 if isinstance(data, str):
                     if in_tool_use:
@@ -101,8 +103,6 @@ async def invoke(payload: dict[str, Any], context: Any):
                         in_tool_use = False
                     await event_queue.put({"type": "text", "data": data})
                 elif "result" in event:
-                    # Terminal event. A turn cap trip looks like a normal stop to
-                    # the UI, so say what happened instead of ending mid-thought.
                     if getattr(event["result"], "stop_reason", "") == "limit_turns":
                         if in_tool_use:
                             await event_queue.put({"type": "tool_result"})
@@ -126,6 +126,7 @@ async def invoke(payload: dict[str, Any], context: Any):
                 await event_queue.put({"type": "tool_result"})
             await event_queue.put(None)
 
+    # start stream response
     task = asyncio.create_task(agent_stream())
     while True:
         item = await event_queue.get()

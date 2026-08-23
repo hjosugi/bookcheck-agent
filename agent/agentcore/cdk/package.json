@@ -1,0 +1,37 @@
+{
+  "name": "agentcore-cdk-app",
+  "version": "0.1.0",
+  "bin": {
+    "cdk": "dist/bin/cdk.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cdk": "npm run build && cdk",
+    "clean": "rm -rf dist",
+    "format": "oxfmt .",
+    "format:check": "oxfmt --check .",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "check": "npm run format:check && npm run lint && npm run build && npm run test"
+  },
+  "dependencies": {
+    "@aws/agentcore-cdk": "0.1.0-alpha.45",
+    "aws-cdk-lib": "~2.261.0",
+    "constructs": "~10.7.0"
+  },
+  "devDependencies": {
+    "@types/jest": "~29.5.14",
+    "@types/node": "~24.13.3",
+    "aws-cdk": "~2.1126.0",
+    "jest": "~29.7.0",
+    "oxfmt": "0.64.0",
+    "oxlint": "1.79.0",
+    "prettier": "~3.9.5",
+    "ts-jest": "~29.4.11",
+    "typescript": "~5.9.3",
+    "vitest": "4.1.11"
+  }
+}

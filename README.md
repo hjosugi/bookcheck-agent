@@ -168,13 +168,7 @@ bun run dcc:up
 bun run dcc:ps
 ```
 
-**初回だけ**テーブルを作ります。DynamoDB Local は認証情報を検証しませんが、
-AWS CLI が値を要求するのでダミーを渡します。
-
-> ⚠️ ダミー値は **`export` せず、コマンドの前に置いてください**。環境変数は
-> `aws login` のプロファイルより優先されるため、`export` するとそのシェルの
-> 以降の AWS コマンドが全部 `InvalidClientTokenId` で失敗します。
-> 下の書き方なら変数はその 1 コマンドにしか効きません（bash / zsh / fish で確認済み）。
+初回のみテーブルを作成、AWS CLIはdummy設定。
 
 ```bash
 AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_DEFAULT_REGION=us-east-1 \
@@ -190,10 +184,8 @@ AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_DEFAULT_REGION=us-east-1
     --billing-mode PAY_PER_REQUEST
 ```
 
-`ResourceInUseException: Cannot create preexisting table` が出たら、すでに作成済みという
-意味なので、そのまま次へ進んで問題ありません。
+`ResourceInUseException: Cannot create preexisting table` が出たら、すでに作成済みなので次へ進む。
 
-データはボリュームに永続化されるので、`dcc:up` で作り直してもテーブルは残ります。
 状態の確認と管理画面 <http://localhost:8001> はこちら。
 
 ```bash

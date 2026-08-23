@@ -1,0 +1,7 @@
+{
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "ignorePatterns": ["cdk.out/**", "dist/**", "node_modules/**"]
+}
