@@ -531,6 +531,25 @@ Next.js が SSR モードで検出され、6〜7 分でビルドが終わりま�
 `package.json` の `packageManager` から引くので、pnpm を上げるときも
 `amplify.yml` を触る必要はありません。
 
+### ★ bun ではなく pnpm を使う理由
+
+`ampx`（Amplify Gen 2 のバックエンド CLI）は **bun をサポートしていません**。
+`ampx` は `npm_config_user_agent` 環境変数からパッケージマネージャーを判定し、
+`npm` / `yarn` / `pnpm` 以外なら起動時点で落ちます。
+
+```text
+AmplifyError [UnsupportedPackageManagerError]: Package manager bun is not supported.
+    resolution: 'Use npm, yarn, or pnpm.'
+```
+
+`bunx ampx …` は `npm_config_user_agent` が `bun/1.4.0 …` になるため、
+`amplify.yml` の `backend` フェーズ（`ampx pipeline-deploy`）が必ず失敗します。
+`main` に push しても Amplify のデプロイが通らないのはこれが原因でした。
+
+判定は lockfile や `packageManager` フィールドではなく **`ampx` をどう起動したか**で
+決まります。`pnpm exec ampx …` なら `pnpm/11.22.0 …` になるので通ります。
+ここを `bunx` に戻すと、他がすべて pnpm でも再び失敗します。
+
 pnpm の設定は [`pnpm-workspace.yaml`](pnpm-workspace.yaml) にあります。`.npmrc` ではなく
 こちらです（pnpm 11 は `.npmrc` からこれらを読みません）。とくに `nodeLinker: hoisted` は
 外せません。pnpm 既定の構成では `node_modules` の中身がシンボリックリンクになり、
@@ -860,14 +879,15 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 
 ### 本番
 
-| 症状                                             | 確認                                                                                                                        |
-| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
-| 「考え中…」のまま返らない                        | Amplify とランタイム両方の環境変数。JWT のユーザープール ID / クライアント ID が[メモ #6][memo] [#7][memo] と一致しているか |
-| エージェントがブラウザを使えない                 | ランタイム実行ロールに 2 つのポリシー（[9-2](#9-2-ブラウザツール用の-iam-権限を足す)）                                      |
-| Google 連携に失敗する                            | [メモ #5][memo] がランタイム環境変数とワークロード ID の**2 か所**に同じ値で入っているか                                    |
-| カレンダー登録だけ 403                           | Google Calendar API が有効か、テストユーザーに自分が入っているか                                                            |
-| ビルドが失敗する                                 | Amplify の `main` ブランチのカードから「ビルド」「デプロイ」ログ                                                            |
-| Amplify が `pnpm: command not found`（exit 127） | コンソール側のビルド設定がリポジトリの [`amplify.yml`](amplify.yml) を上書きしていないか。pnpm は `preBuild` で入れています |
+| 症状                                                                             | 確認                                                                                                                        |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 「考え中…」のまま返らない                                                        | Amplify とランタイム両方の環境変数。JWT のユーザープール ID / クライアント ID が[メモ #6][memo] [#7][memo] と一致しているか |
+| エージェントがブラウザを使えない                                                 | ランタイム実行ロールに 2 つのポリシー（[9-2](#9-2-ブラウザツール用の-iam-権限を足す)）                                      |
+| Google 連携に失敗する                                                            | [メモ #5][memo] がランタイム環境変数とワークロード ID の**2 か所**に同じ値で入っているか                                    |
+| カレンダー登録だけ 403                                                           | Google Calendar API が有効か、テストユーザーに自分が入っているか                                                            |
+| ビルドが失敗する                                                                 | Amplify の `main` ブランチのカードから「ビルド」「デプロイ」ログ                                                            |
+| Amplify の `backend` フェーズが `Package manager bun is not supported.` で落ちる | `ampx` は bun を受け付けません。`amplify.yml` が `pnpm exec ampx` を使っているか（[10](#10-web-アプリをデプロイ)）          |
+| Amplify が `pnpm: command not found`（exit 127）                                 | コンソール側のビルド設定がリポジトリの [`amplify.yml`](amplify.yml) を上書きしていないか。pnpm は `preBuild` で入れています |
 
 エラーの原因が分からないときは、コードとエラーメッセージを添えて AI に聞くのが速いです
 （機密情報は送らないこと）。AgentCore と Strands はアップデートが速いので、
