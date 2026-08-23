@@ -16,7 +16,13 @@
       "runtimeVersion": "PYTHON_3_12",
       "networkMode": "PUBLIC",
       "protocol": "HTTP",
-      "envVars": [{ "name": "CREDENTIAL_PROVIDER_NAME", "value": "google-oauth-client" }],
+      "envVars": [
+        { "name": "CREDENTIAL_PROVIDER_NAME", "value": "google-oauth-client" },
+        {
+          "name": "CALLBACK_URL",
+          "value": "https://main.d3ar6hc7re2cd9.amplifyapp.com/api/oauth2/callback"
+        }
+      ],
       "additionalPolicies": [
         "arn:aws:iam::aws:policy/AmazonBedrockFullAccess",
         "arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess"

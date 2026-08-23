@@ -1,7 +1,9 @@
 'use client'
 
-// Session list. New chat, select, delete.
+// Session list. New chat, select, delete, sign out.
 // On small screens the parent toggles visibility.
+
+import { SignOutButton } from './sign-out'
 
 export interface SessionSummary {
   sessionId: string
@@ -51,6 +53,8 @@ export function Sidebar({ sessions, activeId, busy, onNew, onSelect, onDelete }:
           </div>
         ))}
       </nav>
+
+      <SignOutButton />
     </aside>
   )
 }

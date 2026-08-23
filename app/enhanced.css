@@ -108,6 +108,29 @@
   color: #d33;
 }
 
+/* Sits below the session list, which owns the free space (flex: 1),
+   so this stays pinned to the bottom of the sidebar. Quieter than
+   .new-chat: signing out is not what anyone came here to do. */
+.sign-out {
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: #888;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+}
+.sign-out:hover:not(:disabled) {
+  border-color: #e5e5e5;
+  background: #f5f5f5;
+  color: #333;
+}
+.sign-out:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
 /* ===== Mobile: collapsible sidebar ===== */
 .sidebar-toggle {
   display: none;

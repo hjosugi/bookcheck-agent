@@ -29,3 +29,15 @@ export async function POST(request: Request) {
   })
   return NextResponse.json({ status: 'ok' })
 }
+
+// Ends the server side of the session. The cookie is httpOnly, so the
+// browser cannot clear it on sign-out and has to ask for it here.
+//
+// Deliberately unauthenticated: it only clears the caller's own cookie,
+// and requiring a valid token would make signing out impossible once the
+// token has expired — exactly when a user most wants to sign out.
+export async function DELETE() {
+  const cookieStore = await cookies()
+  cookieStore.delete('agentcore_user_token')
+  return NextResponse.json({ status: 'ok' })
+}
