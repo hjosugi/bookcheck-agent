@@ -20,7 +20,14 @@
       "additionalPolicies": [
         "arn:aws:iam::aws:policy/AmazonBedrockFullAccess",
         "arn:aws:iam::aws:policy/BedrockAgentCoreFullAccess"
-      ]
+      ],
+      "authorizerType": "CUSTOM_JWT",
+      "authorizerConfiguration": {
+        "customJwtAuthorizer": {
+          "discoveryUrl": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_kTV2qzSpg/.well-known/openid-configuration",
+          "allowedClients": ["5r6vps8b5fhc02urmn3gk8rrem"]
+        }
+      }
     }
   ],
   "memories": [

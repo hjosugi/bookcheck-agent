@@ -547,20 +547,6 @@ AmplifyError [UnsupportedPackageManagerError]: Package manager bun is not suppor
     resolution: 'Use npm, yarn, or pnpm.'
 ```
 
-`bunx ampx …` は `npm_config_user_agent` が `bun/1.4.0 …` になるため、
-`amplify.yml` の `backend` フェーズ（`ampx pipeline-deploy`）が必ず失敗します。
-`main` に push しても Amplify のデプロイが通らないのはこれが原因でした。
-
-判定は lockfile や `packageManager` フィールドではなく **`ampx` をどう起動したか**で
-決まります。`pnpm exec ampx …` なら `pnpm/11.22.0 …` になるので通ります。
-ここを `bunx` に戻すと、他がすべて pnpm でも再び失敗します。
-
-pnpm の設定は [`pnpm-workspace.yaml`](pnpm-workspace.yaml) にあります。`.npmrc` ではなく
-こちらです（pnpm 11 は `.npmrc` からこれらを読みません）。とくに `nodeLinker: hoisted` は
-外せません。pnpm 既定の構成では `node_modules` の中身がシンボリックリンクになり、
-Next.js の SSR 出力トレース（`.next/**/*.nft.json`）がリンク先を辿らないため、
-Amplify のデプロイ成果物から依存が欠落します。
-
 ### 10-1. 値を 3 つ控える（メモ #4, #6, #7）
 
 - **ドメイン URL**（[メモ #4][memo]）: `https://main.xxxxxxxxxx.amplifyapp.com`
@@ -645,8 +631,6 @@ CloudFormation に上書きされて消えます（[★ 再デプロイ時の落
   }
 }
 ```
-
-`<>` は書かず、値だけを入れます。書けたら検証してデプロイします。
 
 ```bash
 pnpm run agent:validate
