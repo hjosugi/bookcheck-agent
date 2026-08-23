@@ -652,19 +652,43 @@ Google の「認証情報」→ `bookchecker-agentcore` に、**AgentCore 自身
 （`AdminCreateUserConfig.AllowAdminCreateUserOnly`）。ログイン画面にも
 サインアップのタブは出ません。利用者は CLI から作ります。
 
-```bash
+メールアドレスを 3 か所に書くことになるので、先に変数に入れます（fish）。
+
+```fish
+set -l POOL_ID us-east-1_xxxxxxxxx   # メモ #6
+set -l EMAIL you@example.com
+
 aws cognito-idp admin-create-user \
-  --user-pool-id <メモ#6> \
-  --username <自分のメールアドレス> \
-  --user-attributes Name=email,Value=<自分のメールアドレス> Name=email_verified,Value=true \
+  --user-pool-id $POOL_ID \
+  --username $EMAIL \
+  --user-attributes Name=email,Value=$EMAIL Name=email_verified,Value=true \
   --region us-east-1
 ```
 
 仮パスワードが記載された招待メールが届きます。初回ログインで新しい
 パスワードを求められるので、そこで設定してください。
 
-家族や同僚に使ってもらうときは、同じコマンドを人数分実行します。
-やめてもらうときは `admin-delete-user` です。
+家族や同僚に使ってもらうときは、`$EMAIL` を入れ替えて同じコマンドを人数分。
+やめてもらうときは削除します。
+
+```fish
+aws cognito-idp admin-delete-user \
+  --user-pool-id $POOL_ID \
+  --username $EMAIL \
+  --region us-east-1
+```
+
+いま誰が使えるかは一覧で確認できます。
+
+```fish
+aws cognito-idp list-users \
+  --user-pool-id $POOL_ID \
+  --region us-east-1 \
+  --query "Users[].[Username,UserStatus]" --output table
+```
+
+bash や zsh を使っているときは `set -l NAME value` を `NAME=value` に、
+`# コメント` を行末から外して読み替えてください。
 
 ### 12-2. 動かしてみる
 

@@ -1,0 +1,23 @@
+{
+  "targets": {
+    "prod": {
+      "resources": {
+        "runtimes": {
+          "BookChecker": {
+            "runtimeId": "BookcheckAgent_BookChecker-rWN8xQCgPL",
+            "runtimeArn": "arn:aws:bedrock-agentcore:us-east-1:590183827358:runtime/BookcheckAgent_BookChecker-rWN8xQCgPL",
+            "roleArn": "arn:aws:iam::590183827358:role/AgentCore-BookcheckAgent--ApplicationAgentBookCheck-Mi8suwNvrkFm"
+          }
+        },
+        "memories": {
+          "BookCheckerMemory": {
+            "memoryId": "BookcheckAgent_BookCheckerMemory-f5X4M3EJZF",
+            "memoryArn": "arn:aws:bedrock-agentcore:us-east-1:590183827358:memory/BookcheckAgent_BookCheckerMemory-f5X4M3EJZF"
+          }
+        },
+        "stackName": "AgentCore-BookcheckAgent-prod",
+        "deployHash": "a11b403ce77735b2"
+      }
+    }
+  }
+}
