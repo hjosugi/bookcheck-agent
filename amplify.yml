@@ -3,27 +3,34 @@ backend:
   phases:
     preBuild:
       commands:
-        - npm install -g bun@$(node -p "require('./package.json').packageManager.split('@')[1]")
+        # Amplify のビルドイメージに pnpm は入っていないので入れる。バージョンは
+        # package.json の packageManager から引く（corepack が付ける "+sha512..." は落とす）。
+        - npm install -g pnpm@$(node -p "require('./package.json').packageManager.split('@').pop().split('+')[0]")
         - node --version
-        - bun --version
+        - pnpm --version
     build:
       commands:
-        - bun install --frozen-lockfile
-        - bunx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+        - pnpm install --frozen-lockfile
+        # amplify_outputs.json はここで生成される。frontend フェーズより先に走る必要がある。
+        - pnpm exec ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
   phases:
     preBuild:
       commands:
-        - npm install -g bun@$(node -p "require('./package.json').packageManager.split('@')[1]")
-        - bun install --frozen-lockfile
+        - npm install -g pnpm@$(node -p "require('./package.json').packageManager.split('@').pop().split('+')[0]")
+        - pnpm --version
+        - pnpm install --frozen-lockfile
     build:
       commands:
-        - bun run build
+        - pnpm run build
   artifacts:
     baseDirectory: .next
     files:
       - '**/*'
   cache:
     paths:
+      # node_modules は意図的にキャッシュしない。--frozen-lockfile と組み合わせると
+      # 別コミットで作られた node_modules がそのまま再利用され、lockfile と実体が
+      # ずれたままビルドが通ってしまう。pnpm はストアを温めれば十分速い。
+      - .pnpm-store/**/*
       - .next/cache/**/*
-      - node_modules/**/*

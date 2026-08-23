@@ -4,8 +4,8 @@ import { BookcheckAgentStack } from '../lib/bookcheck-agent-stack'
 import { resolveEnv } from '../lib/env-config'
 
 // Deploy one environment at a time:
-//   bunx cdk deploy -c env=dev
-//   bunx cdk deploy -c env=prod -c ssrRoleName=bookchecker-ssr-role
+//   pnpm exec cdk deploy -c env=dev
+//   pnpm exec cdk deploy -c env=prod -c ssrRoleName=bookchecker-ssr-role
 
 const app = new App()
 

@@ -49,9 +49,9 @@ compose.yml                  Docker 用ローカルサービス
 compose.podman.yml           rootless Podman 用
 ```
 
-JavaScript/TypeScript はルートの `package.json` と `bun.lock`、Python は
+JavaScript/TypeScript はルートの `package.json` と `pnpm-lock.yaml`、Python は
 `agent/app/BookChecker/pyproject.toml` と `uv.lock` で固定します。
-`infra/` は Bun workspace に含まれるので、ルートで一度 install すれば揃います。
+`infra/` は pnpm workspace に含まれるので、ルートで一度 install すれば揃います。
 
 ### ローカルと本番の違い
 
@@ -72,7 +72,7 @@ JavaScript/TypeScript はルートの `package.json` と `bun.lock`、Python は
 - [ ] 自分の AWS アカウント。作業リージョンはバージニア北部 `us-east-1`
 - [ ] Bedrock のモデルアクセスで Amazon Nova Lite が有効
 - [ ] Google アカウント（カレンダーの登録先）
-- [ ] 手元に Node.js 20.9+ / Bun / Python 3.12+ と uv / Docker か Podman / AWS CLI v2
+- [ ] 手元に Node.js 20.9+ / pnpm / Python 3.12+ と uv / Docker か Podman / AWS CLI v2
 
 ---
 
@@ -103,11 +103,11 @@ aws sts get-caller-identity
 
 ### 3-2. 依存関係
 
-リポジトリルートで実行します。Bun workspace と Python の uv 環境がまとめて入ります。
+リポジトリルートで実行します。pnpm workspace と Python の uv 環境がまとめて入ります。
 
 ```bash
-bun run setup
-bun run setup:check
+pnpm run setup
+pnpm run setup:check
 ```
 
 ### 3-3. 設定ファイルを作る
@@ -164,8 +164,8 @@ localhost:8001   dynamodb-admin
 Podman があれば `compose.podman.yml`、無ければ `compose.yml` を自動で選びます。
 
 ```bash
-bun run dcc:up
-bun run dcc:ps
+pnpm run dcc:up
+pnpm run dcc:ps
 ```
 
 初回のみテーブルを作成、AWS CLIはdummy設定。
@@ -209,8 +209,8 @@ AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_DEFAULT_REGION=us-east-1
 別々のターミナルで起動します。
 
 ```bash
-bun run agent:local   # 2 つ目のターミナル
-bun run dev           # 3 つ目のターミナル
+pnpm run agent:local   # 2 つ目のターミナル
+pnpm run dev           # 3 つ目のターミナル
 ```
 
 <http://localhost:3000> を開きます。黄色い `LOCAL MODE` バーが出て、送信・
@@ -226,9 +226,9 @@ bun run dev           # 3 つ目のターミナル
 どちらもオフラインで数秒で終わります。AWS は呼びません。
 
 ```bash
-bun run test        # アプリ 38 件
-bun run infra:test  # CDK 8 件
-bun run check       # format + lint + 型 + 上記すべて
+pnpm run test        # アプリ 38 件
+pnpm run infra:test  # CDK 8 件
+pnpm run check       # format + lint + 型 + 上記すべて
 ```
 
 ### アプリのテスト（`test/`）
@@ -414,16 +414,16 @@ DynamoDB テーブルと IAM ポリシーは `infra/`（AWS CDK）に定義済�
 このスタックはdyanamoのみ作成
 
 ```bash
-bun run infra:test
+pnpm run infra:test
 cd infra
 
 export AWS_REGION=us-east-1
 export CDK_DEFAULT_ACCOUNT="$(aws sts get-caller-identity --query Account --output text)"
 export CDK_DEFAULT_REGION="$AWS_REGION"
 
-bunx cdk bootstrap "aws://$CDK_DEFAULT_ACCOUNT/$CDK_DEFAULT_REGION"
-bunx cdk diff -c env=prod
-bunx cdk deploy -c env=prod --require-approval any-change
+pnpm exec cdk bootstrap "aws://$CDK_DEFAULT_ACCOUNT/$CDK_DEFAULT_REGION"
+pnpm exec cdk diff -c env=prod
+pnpm exec cdk deploy -c env=prod --require-approval any-change
 ```
 
 `cdk diff` の出力を読んでから deploy してください。同じコマンドの再実行は安全です。
@@ -442,9 +442,9 @@ bunx cdk deploy -c env=prod --require-approval any-change
 Python コードを AgentCore Runtime へ送ります。ローカルから実行できます。
 
 ```bash
-bun run agent:validate
-bun run agent:deploy
-bun run agent:status
+pnpm run agent:validate
+pnpm run agent:deploy
+pnpm run agent:status
 ```
 
 - 「CDK bootstrapping required」と出たら Enter
@@ -526,10 +526,35 @@ AWS Amplify を開き、`us-east-1` にいることを確認して「アプリ�
 Next.js が SSR モードで検出され、6〜7 分でビルドが終わります。
 
 ビルド設定はリポジトリの [`amplify.yml`](amplify.yml) が使われるので、コンソール側で
-編集する必要はありません。Amplify のビルドイメージに bun は入っていないため、
-`preBuild` で `npm install -g bun@…` を実行しています。バージョンは
-`package.json` の `packageManager` から引くので、bun を上げるときも
+編集する必要はありません。Amplify のビルドイメージに pnpm は入っていないため、
+`preBuild` で `npm install -g pnpm@…` を実行しています。バージョンは
+`package.json` の `packageManager` から引くので、pnpm を上げるときも
 `amplify.yml` を触る必要はありません。
+
+### ★ bun ではなく pnpm を使う理由
+
+`ampx`（Amplify Gen 2 のバックエンド CLI）は **bun をサポートしていません**。
+`ampx` は `npm_config_user_agent` 環境変数からパッケージマネージャーを判定し、
+`npm` / `yarn` / `pnpm` 以外なら起動時点で落ちます。
+
+```text
+AmplifyError [UnsupportedPackageManagerError]: Package manager bun is not supported.
+    resolution: 'Use npm, yarn, or pnpm.'
+```
+
+`bunx ampx …` は `npm_config_user_agent` が `bun/1.4.0 …` になるため、
+`amplify.yml` の `backend` フェーズ（`ampx pipeline-deploy`）が必ず失敗します。
+`main` に push しても Amplify のデプロイが通らないのはこれが原因でした。
+
+判定は lockfile や `packageManager` フィールドではなく **`ampx` をどう起動したか**で
+決まります。`pnpm exec ampx …` なら `pnpm/11.22.0 …` になるので通ります。
+ここを `bunx` に戻すと、他がすべて pnpm でも再び失敗します。
+
+pnpm の設定は [`pnpm-workspace.yaml`](pnpm-workspace.yaml) にあります。`.npmrc` ではなく
+こちらです（pnpm 11 は `.npmrc` からこれらを読みません）。とくに `nodeLinker: hoisted` は
+外せません。pnpm 既定の構成では `node_modules` の中身がシンボリックリンクになり、
+Next.js の SSR 出力トレース（`.next/**/*.nft.json`）がリンク先を辿らないため、
+Amplify のデプロイ成果物から依存が欠落します。
 
 ### 10-1. 値を 3 つ控える（メモ #4, #6, #7）
 
@@ -587,7 +612,7 @@ DynamoDB へのアクセス権は CDK から付けます。
 
 ```bash
 cd infra
-bunx cdk deploy -c env=prod -c ssrRoleName=bookchecker-ssr-role --require-approval any-change
+pnpm exec cdk deploy -c env=prod -c ssrRoleName=bookchecker-ssr-role --require-approval any-change
 ```
 
 ### 11-2. ランタイムの環境変数と JWT 認証
@@ -619,8 +644,8 @@ CloudFormation に上書きされて消えます（[★ 再デプロイ時の落
 `<>` は書かず、値だけを入れます。書けたら検証してデプロイします。
 
 ```bash
-bun run agent:validate
-bun run agent:deploy
+pnpm run agent:validate
+pnpm run agent:deploy
 ```
 
 これで Cognito でログインしたユーザーだけがエージェントを呼べます。
@@ -825,7 +850,7 @@ CDK が注入する `MEMORY_*` だけ、`AuthorizerConfiguration` に至って�
    アイデンティティのクレデンシャルプロバイダー
 2. **Amplify アプリ**: アプリケーションの設定 → 全般設定 →「アプリの削除」
 3. **ECR リポジトリ**: `agent/bookchecker`
-4. **CDK スタック**: `cd infra && bunx cdk destroy -c env=prod`
+4. **CDK スタック**: `cd infra && pnpm exec cdk destroy -c env=prod`
    （prod はテーブルを保持する設計なので、データは残ります。消すのは別作業です）
 5. **Google Cloud プロジェクト**: 不要なら「IAM と管理」→「設定」からシャットダウン
 
@@ -847,21 +872,22 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 | `InvalidClientTokenId` / `aws login` したのに認証が通らない | ダミー認証情報がシェルに残っている。fish は `set -e AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN`、bash は `unset`。新しいシェルを開いてもよい |
 | `ResourceInUseException` (create-table)                     | テーブル作成済み。無視して次へ                                                                                                                              |
 | `/api/sessions` が 401                                      | `.env.local` の `LOCAL_AUTH=1` を確認して Next.js を再起動                                                                                                  |
-| Podman が short-name を解決できない                         | `bun run dcc:up` を使い、`compose.podman.yml` が選ばれているか                                                                                              |
+| Podman が short-name を解決できない                         | `pnpm run dcc:up` を使い、`compose.podman.yml` が選ばれているか                                                                                             |
 | エージェントが起動しない                                    | `aws sts get-caller-identity` と `.env` のモデル ID                                                                                                         |
 | Bedrock が `AccessDeniedException`                          | [3-4](#3-4-bedrock-のモデルアクセスを確認) のモデルアクセスと IAM 権限                                                                                      |
-| 保存時フォーマットが効かない                                | oxc 拡張は起動時に `node_modules` の oxfmt を探すので、`bun install` 後に `Developer: Reload Window`                                                        |
+| 保存時フォーマットが効かない                                | oxc 拡張は起動時に `node_modules` の oxfmt を探すので、`pnpm install` 後に `Developer: Reload Window`                                                       |
 
 ### 本番
 
-| 症状                                            | 確認                                                                                                                        |
-| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 「考え中…」のまま返らない                       | Amplify とランタイム両方の環境変数。JWT のユーザープール ID / クライアント ID が[メモ #6][memo] [#7][memo] と一致しているか |
-| エージェントがブラウザを使えない                | ランタイム実行ロールに 2 つのポリシー（[9-2](#9-2-ブラウザツール用の-iam-権限を足す)）                                      |
-| Google 連携に失敗する                           | [メモ #5][memo] がランタイム環境変数とワークロード ID の**2 か所**に同じ値で入っているか                                    |
-| カレンダー登録だけ 403                          | Google Calendar API が有効か、テストユーザーに自分が入っているか                                                            |
-| ビルドが失敗する                                | Amplify の `main` ブランチのカードから「ビルド」「デプロイ」ログ                                                            |
-| Amplify が `bun: command not found`（exit 127） | コンソール側のビルド設定がリポジトリの [`amplify.yml`](amplify.yml) を上書きしていないか。bun は `preBuild` で入れています  |
+| 症状                                                                             | 確認                                                                                                                        |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 「考え中…」のまま返らない                                                        | Amplify とランタイム両方の環境変数。JWT のユーザープール ID / クライアント ID が[メモ #6][memo] [#7][memo] と一致しているか |
+| エージェントがブラウザを使えない                                                 | ランタイム実行ロールに 2 つのポリシー（[9-2](#9-2-ブラウザツール用の-iam-権限を足す)）                                      |
+| Google 連携に失敗する                                                            | [メモ #5][memo] がランタイム環境変数とワークロード ID の**2 か所**に同じ値で入っているか                                    |
+| カレンダー登録だけ 403                                                           | Google Calendar API が有効か、テストユーザーに自分が入っているか                                                            |
+| ビルドが失敗する                                                                 | Amplify の `main` ブランチのカードから「ビルド」「デプロイ」ログ                                                            |
+| Amplify の `backend` フェーズが `Package manager bun is not supported.` で落ちる | `ampx` は bun を受け付けません。`amplify.yml` が `pnpm exec ampx` を使っているか（[10](#10-web-アプリをデプロイ)）          |
+| Amplify が `pnpm: command not found`（exit 127）                                 | コンソール側のビルド設定がリポジトリの [`amplify.yml`](amplify.yml) を上書きしていないか。pnpm は `preBuild` で入れています |
 
 エラーの原因が分からないときは、コードとエラーメッセージを添えて AI に聞くのが速いです
 （機密情報は送らないこと）。AgentCore と Strands はアップデートが速いので、
@@ -872,18 +898,18 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 
 ## 付録A コマンド一覧
 
-| コマンド                                                   | 内容                                          |
-| ---------------------------------------------------------- | --------------------------------------------- |
-| `bun run setup`                                            | Bun workspace と Python uv 環境をセットアップ |
-| `bun run setup:check`                                      | 必要なツールが揃っているか確認                |
-| `bun run dev`                                              | Next.js をローカル起動                        |
-| `bun run agent:local`                                      | Python エージェントをポート 8080 で起動       |
-| `bun run dcc:up` / `dcc:down` / `dcc:ps` / `dcc:logs`      | ローカルコンテナ                              |
-| `bun run test` / `test:watch` / `test:cov`                 | アプリのテスト                                |
-| `bun run fmt` / `fmt:check` / `lint` / `typecheck`         | 整形と静的検査                                |
-| `bun run check`                                            | 上記すべて + infra テスト                     |
-| `bun run agent:validate` / `agent:deploy` / `agent:status` | AgentCore                                     |
-| `bun run infra:test` / `infra:synth:dev` / `infra:check`   | CDK                                           |
+| コマンド                                                    | 内容                                           |
+| ----------------------------------------------------------- | ---------------------------------------------- |
+| `pnpm run setup`                                            | pnpm workspace と Python uv 環境をセットアップ |
+| `pnpm run setup:check`                                      | 必要なツールが揃っているか確認                 |
+| `pnpm run dev`                                              | Next.js をローカル起動                         |
+| `pnpm run agent:local`                                      | Python エージェントをポート 8080 で起動        |
+| `pnpm run dcc:up` / `dcc:down` / `dcc:ps` / `dcc:logs`      | ローカルコンテナ                               |
+| `pnpm run test` / `test:watch` / `test:cov`                 | アプリのテスト                                 |
+| `pnpm run fmt` / `fmt:check` / `lint` / `typecheck`         | 整形と静的検査                                 |
+| `pnpm run check`                                            | 上記すべて + infra テスト                      |
+| `pnpm run agent:validate` / `agent:deploy` / `agent:status` | AgentCore                                      |
+| `pnpm run infra:test` / `infra:synth:dev` / `infra:check`   | CDK                                            |
 
 ---
 

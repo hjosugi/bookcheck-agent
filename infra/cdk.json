@@ -1,5 +1,5 @@
 {
-  "app": "bunx tsx bin/app.ts",
+  "app": "pnpm exec tsx bin/app.ts",
   "watch": {
     "include": ["**"],
     "exclude": ["README.md", "cdk*.json", "node_modules", "test"]
