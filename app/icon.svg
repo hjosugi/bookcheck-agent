@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="新刊チェッカー">
+  <!-- Favicons are read at 16px, so this stays a two-tone silhouette: an
+       open book, no outlines or page rules that would smear into grey.
+       Colours are the app's own accent (#8a6d1a on #fff8e6, enhanced.css),
+       and the mid-dark amber holds its edge against both a light and a
+       dark browser tab strip. -->
+  <rect width="32" height="32" rx="7" fill="#8a6d1a" />
+  <g fill="#fff8e6">
+    <path d="M15 12c-2.5-1.7-5.5-2.5-8.5-2.3-.6.04-1 .5-1 1.1v11.1c0 .6.5 1 1.1.97 2.8-.17 5.7.53 8.4 2.13z" />
+    <path d="M17 12c2.5-1.7 5.5-2.5 8.5-2.3.6.04 1 .5 1 1.1v11.1c0 .6-.5 1-1.1.97-2.8-.17-5.7.53-8.4 2.13z" />
+  </g>
+</svg>
