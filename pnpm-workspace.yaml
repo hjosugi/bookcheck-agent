@@ -1,0 +1,22 @@
+# bun の package.json "workspaces" に相当する。pnpm は専用ファイルで指定する。
+# pnpm 11 は .npmrc ではなくこのファイルから設定を読む。
+packages:
+  - infra
+
+# node_modules をシンボリックリンクではなく実体で並べる（bun と同じ配置）。
+# Next.js の SSR 出力トレース（.next/**/*.nft.json）はリンク先を追わないため、pnpm 既定の
+# isolated 構成のままだと Amplify のデプロイ成果物から依存が欠落する。
+nodeLinker: hoisted
+
+# pnpm ストアをリポジトリ配下に置く。amplify.yml の cache.paths で温めるため。
+storeDir: .pnpm-store
+
+# pnpm 10 以降は依存パッケージのインストールスクリプトを既定で実行しない。
+# bun は実行していたので、動作に必要なものだけ明示的に許可して差を埋める。
+# core-js は寄付の案内を出すだけなので許可しない。
+allowBuilds:
+  '@aws/agentcore': true # agentcore CLI（package.json の agent:* スクリプト）
+  '@parcel/watcher': true # ネイティブ拡張（ampx sandbox のファイル監視）
+  esbuild: true # プラットフォーム別バイナリの配置
+  protobufjs: true # 生成物の準備
+  core-js: false

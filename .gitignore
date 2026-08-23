@@ -17,9 +17,10 @@ handson-memo.local.txt
 tsconfig.tsbuildinfo
 
 # .vscode は「共有する設定」だけ追跡する。
-# settings.json  = oxfmt/oxlint をエディタに強制（bun run fmt:check と同じ規約）
+# settings.json  = oxfmt/oxlint をエディタに強制（pnpm run fmt:check と同じ規約）
 # extensions.json = 推奨拡張。共有するために存在するファイル
 # それ以外（個人メモ、launch.json、IDE 生成物）は追跡しない。
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+.pnpm-store/
