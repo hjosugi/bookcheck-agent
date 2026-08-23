@@ -28,6 +28,20 @@ export interface AuthedUser {
   sub: string
 }
 
+// Verify a raw access token. Used where the token does not arrive in an
+// Authorization header: the OAuth callback is a top-level redirect from
+// Google, so the browser sends cookies and nothing else.
+export async function verifyAccessToken(token: string): Promise<AuthedUser | null> {
+  if (!token) return null
+  if (LOCAL_AUTH) return { sub: LOCAL_USER_SUB }
+  try {
+    const payload = await getVerifier().verify(token)
+    return { sub: payload.sub }
+  } catch {
+    return null
+  }
+}
+
 // Read the Bearer token and verify it.
 // Return the user, or null when the token is missing or invalid.
 export async function requireUser(req: Request): Promise<AuthedUser | null> {
@@ -35,11 +49,5 @@ export async function requireUser(req: Request): Promise<AuthedUser | null> {
 
   const header = req.headers.get('authorization') ?? ''
   const token = header.startsWith('Bearer ') ? header.slice(7) : ''
-  if (!token) return null
-  try {
-    const payload = await getVerifier().verify(token)
-    return { sub: payload.sub }
-  } catch {
-    return null
-  }
+  return verifyAccessToken(token)
 }

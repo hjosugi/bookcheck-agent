@@ -226,7 +226,7 @@ bun run dev           # 3 つ目のターミナル
 どちらもオフラインで数秒で終わります。AWS は呼びません。
 
 ```bash
-bun run test        # アプリ 32 件
+bun run test        # アプリ 38 件
 bun run infra:test  # CDK 8 件
 bun run check       # format + lint + 型 + 上記すべて
 ```
@@ -466,13 +466,27 @@ ARN の `runtime/` 以降（例: `agent_BookChecker-XXXXXXXXXX`）がメモ #3 �
 ### 9-2. ブラウザツール用の IAM 権限を足す
 
 `agentcore deploy` はモデル呼び出しやログ、メモリー関連の権限を自動付与しますが、
-**ブラウザツールの権限だけは自動で付きません**。
+**ブラウザツールの権限だけは既定では付きません**。
 
-ランタイム詳細 →「バージョン1」→「許可」の IAM ロールを開き、
-「許可を追加」→「ポリシーをアタッチ」から次の 2 つを追加します。
+このリポジトリでは
+[`agent/agentcore/agentcore.json`](agent/agentcore/agentcore.json) の
+`runtimes[].additionalPolicies` に次の 2 つを書いてあるので、
+`agentcore deploy` がランタイム実行ロールへ自動でアタッチします。
+コンソールでの手作業は不要です。
 
 - `AmazonBedrockFullAccess`
 - `BedrockAgentCoreFullAccess`
+
+付いているかは実行ロール名を控えて確認できます
+（ロール名はランタイム詳細 →「バージョン1」→「許可」に出ます）。
+
+```bash
+aws iam list-attached-role-policies --role-name <ランタイム実行ロール名>
+```
+
+> 2 つとも AWS マネージドポリシーで範囲が広めです。最小権限に寄せる場合は
+> `additionalPolicies` にポリシー JSON のパス（`codeLocation` からの相対）を
+> 書けば、インラインポリシーとしてアタッチされます。
 
 ---
 
@@ -561,24 +575,45 @@ bunx cdk deploy -c env=prod -c ssrRoleName=bookchecker-ssr-role --require-approv
 
 ### 11-2. ランタイムの環境変数と JWT 認証
 
-AgentCore →「ランタイム」→ `agent_BookChecker` →「ホスティングをアップデート」→
-「高度な設定」。既存の変数は消さずに 3 つ追加します。
+**コンソールでは設定しません。** ここで手入力すると、次の `agentcore deploy` で
+CloudFormation に上書きされて消えます（[★ 再デプロイ時の落とし穴](#-再デプロイ時の落とし穴)）。
+[`agent/agentcore/agentcore.json`](agent/agentcore/agentcore.json) に書いて
+デプロイし直すのが正解です。
 
-| 変数名                     | 値          |
-| -------------------------- | ----------- |
-| `CALLBACK_URL`             | メモ #5     |
-| `CREDENTIAL_PROVIDER_NAME` | メモ #1     |
-| `AWS_DEFAULT_REGION`       | `us-east-1` |
+`CREDENTIAL_PROVIDER_NAME` と `AWS_DEFAULT_REGION` は最初から入っているので、
+`envVars` に `CALLBACK_URL` を足し、`authorizerType` と
+`authorizerConfiguration` を新しく足します。
 
-続いて「インバウンド認証」で「JSON Web Tokens (JWT) を使用」を選びます。
+```jsonc
+// agent/agentcore/agentcore.json の runtimes[0]
+"envVars": [
+  { "name": "CREDENTIAL_PROVIDER_NAME", "value": "google-oauth-client" },
+  { "name": "AWS_DEFAULT_REGION", "value": "us-east-1" },
+  { "name": "CALLBACK_URL", "value": "<メモ#5>" }
+],
+"authorizerType": "CUSTOM_JWT",
+"authorizerConfiguration": {
+  "customJwtAuthorizer": {
+    "discoveryUrl": "https://cognito-idp.us-east-1.amazonaws.com/<メモ#6>/.well-known/openid-configuration",
+    "allowedClients": ["<メモ#7>"]
+  }
+}
+```
 
-| 項目                   | 値                                                                                      |
-| ---------------------- | --------------------------------------------------------------------------------------- |
-| 検出 URL               | `https://cognito-idp.us-east-1.amazonaws.com/<メモ#6>/.well-known/openid-configuration` |
-| 許可されたクライアント | メモ #7（「クライアントを追加」から）                                                   |
+`<>` は書かず、値だけを入れます。書けたら検証してデプロイします。
+
+```bash
+bun run agent:validate
+bun run agent:deploy
+```
 
 これで Cognito でログインしたユーザーだけがエージェントを呼べます。
-設定後、右下の「ホストエージェント/ツール」で再デプロイします。
+`MEMORY_BOOKCHECKERMEMORY_ID` は CDK が自動で注入するので、書く必要はありません。
+
+> メモ #6 と #7 はブラウザに配られる公開識別子で秘密ではありませんが、
+> このリポジトリは public なので、Cognito のセルフサインアップは
+> [`amplify/backend.ts`](amplify/backend.ts) で閉じてあります。
+> ユーザーの作り方は [12. 動作確認](#12-動作確認)を参照。
 
 ### 11-3. ワークロード ID に許可 URL を登録
 
@@ -610,9 +645,32 @@ Google の「認証情報」→ `bookchecker-agentcore` に、**AgentCore 自身
 
 ## 12. 動作確認
 
+### 12-1. 自分のアカウントを作る
+
+このリポジトリは public なので、Cognito のセルフサインアップは
+[`amplify/backend.ts`](amplify/backend.ts) で閉じてあります
+（`AdminCreateUserConfig.AllowAdminCreateUserOnly`）。ログイン画面にも
+サインアップのタブは出ません。利用者は CLI から作ります。
+
+```bash
+aws cognito-idp admin-create-user \
+  --user-pool-id <メモ#6> \
+  --username <自分のメールアドレス> \
+  --user-attributes Name=email,Value=<自分のメールアドレス> Name=email_verified,Value=true \
+  --region us-east-1
+```
+
+仮パスワードが記載された招待メールが届きます。初回ログインで新しい
+パスワードを求められるので、そこで設定してください。
+
+家族や同僚に使ってもらうときは、同じコマンドを人数分実行します。
+やめてもらうときは `admin-delete-user` です。
+
+### 12-2. 動かしてみる
+
 ドメイン URL にアクセスします。
 
-1. Cognito でアカウント作成 → 確認コードを入力してログイン
+1. 12-1 のアカウントでログイン
 2. 例:「私は AI に興味があります。来月の技術書の新刊をチェックして、
    面白そうなものを1つ選んでカレンダーに入れて」
 
@@ -652,11 +710,58 @@ AgentCore →「ランタイム」→ `agent_BookChecker` →「DEFAULT」エン
 
 ### ★ 再デプロイ時の落とし穴
 
-バックエンドを直して `agentcore deploy` をやり直すと、
-**コンソールで手入力したランタイムの環境変数とインバウンド認証がリセットされます**。
-つまり [11-2](#11-2-ランタイムの環境変数と-jwt-認証) をもう一度やる必要があります。
+`agentcore deploy` は CloudFormation でランタイムを宣言的に更新します。つまり
+**コンソールで手入力した環境変数とインバウンド認証は、デプロイのたびに消えます**。
+テンプレートに出てくる `EnvironmentVariables` は `agentcore.json` の `envVars` と
+CDK が注入する `MEMORY_*` だけ、`AuthorizerConfiguration` に至ってはプロパティごと
+存在しない（＝ `AWS_IAM` に戻る）ためです。
+
+なので設定は必ず [`agent/agentcore/agentcore.json`](agent/agentcore/agentcore.json)
+に書きます（[11-2](#11-2-ランタイムの環境変数と-jwt-認証)）。そうしておけば
+再デプロイしても勝手に消えません。
+
+**スタックを削除して作り直した場合**は、ランタイムが別物になるので追加で必要です。
+
+| 順  | やること                                                                             |
+| --- | ------------------------------------------------------------------------------------ |
+| 1   | `agentcore deploy`                                                                   |
+| 2   | [9-1](#9-1-ランタイム-arn-を控えるメモ-2-3) で ARN / ID を控え直す（値が変わります） |
+| 3   | [11-3](#11-3-ワークロード-id-に許可-url-を登録) を新しいランタイム ID でやり直す     |
+| 4   | Amplify の `NEXT_PUBLIC_AGENT_ARN` を新しい ARN に更新して再デプロイ                 |
+
+[9-2](#9-2-ブラウザツール用の-iam-権限を足す) と
+[11-2](#11-2-ランタイムの環境変数と-jwt-認証) は `agentcore.json` 側にあるので不要です。
+メモ #1 のクレデンシャルプロバイダーはスタック管理外なので残ります。
+ただし AgentCore メモリーは作り直しになるため、それまでの会話と好みは消えます。
 
 フロントエンドの修正は GitHub に push するだけで Amplify が自動再デプロイします。
+
+### ★ public リポジトリで運用する
+
+このリポジトリは public です。デプロイ先の URL や Cognito の ID は
+（`agentcore.json` からも Amplify のビルド成果物からも）人目に触れる前提で、
+**知られても踏み込めない**ようにしてあります。
+
+| 入口                                     | 誰が通れるか                                                                              |
+| ---------------------------------------- | ----------------------------------------------------------------------------------------- |
+| ログイン画面                             | 管理者が `admin-create-user` で作ったユーザーだけ（[12-1](#12-1-自分のアカウントを作る)） |
+| チャット（AgentCore Runtime を直接叩く） | ランタイムのインバウンド JWT 認証（[11-2](#11-2-ランタイムの環境変数と-jwt-認証)）        |
+| `/api/sessions` `/api/rate-check`        | `requireUser` が Cognito アクセストークンを検証                                           |
+| `/api/set-token`                         | 受け取ったトークンを検証してから Cookie に入れる                                          |
+| `/api/oauth2/callback`                   | Cookie のトークンを検証（存在チェックだけでは通さない）                                   |
+
+`/api/oauth2/callback` は Google からのリダイレクトで戻ってくるので
+`Authorization` ヘッダーが付きません。だから Cookie を見ますが、**中身の JWT を
+検証**します。ここは AgentCore を Amplify 側の IAM ロールで呼ぶハンドラーなので、
+未ログインの訪問者に実行させてはいけません。
+
+`LOCAL_AUTH` による認証バイパスは
+[`app/lib/verify-token.ts`](app/lib/verify-token.ts) で
+`NODE_ENV !== 'production'` を条件にしてあり、production ビルドでは
+環境変数に何を入れても有効になりません。
+
+コミットしない値は `.gitignore` にまとめてあります（`.env*`、
+`aws-targets.json`、`handson-memo.local.txt`）。
 
 ### エージェントの暴走対策
 
@@ -670,7 +775,7 @@ AgentCore →「ランタイム」→ `agent_BookChecker` →「DEFAULT」エン
 ## 14. クリーンアップ
 
 すべてサーバーレスなので放置しても大きな課金はありません。ただし
-**このアプリは URL を知っていれば誰でも利用登録できます**。終わったら消してください。
+このアプリは URL を知っていれば誰でも利用登録できます。終わったら消してください。
 
 1. **AgentCore**: ランタイム `agent_BookChecker` / 自動作成されたメモリー /
    アイデンティティのクレデンシャルプロバイダー
@@ -804,8 +909,6 @@ Next.js を経由させれば `Last-Event-ID` による真の再開ができま�
 | 13.5 確認・運用・片付け              | [12](#12-動作確認) / [13](#13-運用) / [14](#14-クリーンアップ) |
 
 公式サンプル: <https://github.com/minorun365/agentcore-book/tree/main/chapter13>（MIT）
-
-`calendar_tool.py` は読む価値があります。
 
 ![キュー合流](img/04-queue.svg)
 

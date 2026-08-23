@@ -4,6 +4,7 @@ import {
 } from '@aws-sdk/client-bedrock-agentcore'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyAccessToken } from '../../../lib/verify-token'
 
 const client = new BedrockAgentCoreClient({
   region: process.env.AWS_REGION ?? 'us-east-1',
@@ -15,10 +16,16 @@ export async function GET(request: NextRequest) {
     return new NextResponse('session_idが未指定です', { status: 400 })
   }
 
+  // Google redirects the browser here as a top-level navigation, so there is
+  // no Authorization header to read. The cookie set by /api/set-token carries
+  // the Cognito access token instead, and it is verified here rather than
+  // trusted for being present: this handler calls AWS on the app's own IAM
+  // role, so it must never run for a visitor who is not signed in.
   const cookieStore = await cookies()
-  const token = cookieStore.get('agentcore_user_token')?.value
-  if (!token) {
-    return new NextResponse('トークンが未設定です', { status: 401 })
+  const token = cookieStore.get('agentcore_user_token')?.value ?? ''
+  const user = await verifyAccessToken(token)
+  if (!user) {
+    return new NextResponse('ログインが必要です', { status: 401 })
   }
 
   try {
