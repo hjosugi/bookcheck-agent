@@ -35,13 +35,16 @@ production デプロイまで順番どおりに進められます。**
 
 ```text
 app/                         Next.js App Router（Web UI + Route Handlers）
-  api/                       サーバー側 API
-  components/ hooks/ lib/    UI とロジック
+  api/                       サーバー側 API（sessions / rate-check / set-token / oauth2）
+  components/                UI（chat / message-list / sidebar / markdown）
+  hooks/                     use-agent-stream（SSE クライアント）
+  lib/                       ロジック（下の「モジュールの分け方」を参照）
 agent/
   agentcore/                 AgentCore の宣言設定
   app/BookChecker/           Python / Strands エージェント（uv）
 amplify/                     Cognito 認証（Amplify Gen 2）
 infra/                       DynamoDB と IAM の AWS CDK
+scripts/                     ローカル用スクリプト（seed-local.mjs）
 test/                        Vitest
 img/                         このドキュメントの図
 handson-memo.txt             値のメモテンプレート
@@ -211,6 +214,16 @@ AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_DEFAULT_REGION=us-east-1
     --endpoint-url http://127.0.0.1:8000 --table-name bookchecker-app
 ```
 
+空の画面だと動作確認しづらいので、閲覧用のサンプル履歴を入れられます。
+
+```bash
+pnpm run seed:local
+```
+
+3 セッション（通常の往復、カレンダー登録、中断あり）が入ります。何度実行しても
+増えません。`DYNAMO_ENDPOINT` が localhost 以外なら起動を拒否するので、
+本番テーブルに流し込む事故は起きません。
+
 ### 4-2. エージェントと Next.js
 
 別々のターミナルで起動します。
@@ -233,19 +246,21 @@ pnpm run dev           # 3 つ目のターミナル
 どちらもオフラインで数秒で終わります。AWS は呼びません。
 
 ```bash
-pnpm run test        # アプリ 38 件
+pnpm run test        # アプリ 52 件
 pnpm run infra:test  # CDK 8 件
 pnpm run check       # format + lint + 型 + 上記すべて
 ```
 
 ### アプリのテスト（`test/`）
 
-| ファイル                   | 対象                                                              |
-| -------------------------- | ----------------------------------------------------------------- |
-| `rate-limit.test.ts`       | トークンバケット: 補充、上限、楽観ロック、競合再試行、fail-closed |
-| `use-agent-stream.test.ts` | SSE のチャンク跨ぎ解析、再試行ポリシー、URL 構築                  |
-| `sessions-api.test.ts`     | Route Handler: 所有権分離、順序、バリデーション、タイトル付け     |
-| `keys-and-auth.test.ts`    | キー構築（＝認可モデルそのもの）、ローカル認証モード              |
+| ファイル                   | 件数 | 対象                                                              |
+| -------------------------- | ---- | ----------------------------------------------------------------- |
+| `chat-messages.test.ts`    | 14   | ストリーム中のメッセージ配列の書き換えと `ReplyBuffer`            |
+| `use-agent-stream.test.ts` | 9    | SSE のチャンク跨ぎ解析、再試行ポリシー、URL 構築                  |
+| `rate-limit.test.ts`       | 8    | トークンバケット: 補充、上限、楽観ロック、競合再試行、fail-closed |
+| `sessions-api.test.ts`     | 8    | Route Handler: 所有権分離、順序、バリデーション、タイトル付け     |
+| `keys-and-auth.test.ts`    | 7    | キー構築（＝認可モデルそのもの）、ローカル認証モード              |
+| `public-endpoints.test.ts` | 6    | 認証不要エンドポイントが増えていないこと                          |
 
 DynamoDB は `aws-sdk-client-mock` でモックしているので、戻り値ではなく
 **送信されたコマンドそのもの**を検証します。`ConditionExpression` と
@@ -258,7 +273,10 @@ DynamoDB は `aws-sdk-client-mock` でモックしているので、戻り値で
 3. **キー構築による所有権** — 認可チェックを別に持たず、ユーザー ID をパーティションキーに含める
 
 React コンポーネントのテストは意図的に書いていません。テストする価値のある
-ロジックを `use-agent-stream.ts` と `lib/` に追い出してあるためです。
+ロジックを `hooks/` と `lib/` に追い出してあるためです。`chat-messages.test.ts`
+が検証しているスピナーの開始・完了やバブルの分割は、以前 `chat.tsx` の
+`sendPrompt` の中に埋まっていて手が届かなかった部分です。jsdom も
+testing-library も入れずに、Node 環境のまま実行できます。
 
 ### インフラのテスト（`infra/test/`）
 
@@ -789,7 +807,7 @@ CDK が注入する `MEMORY_*` だけ、`AuthorizerConfiguration` に至って�
 | 3   | [11-3](#11-3-ワークロード-id-に許可-url-を登録) を新しいランタイム ID でやり直す     |
 | 4   | Amplify の `NEXT_PUBLIC_AGENT_ARN` を新しい ARN に更新して再デプロイ                 |
 
-[9-2](#9-2-ブラウザツール用の-iam-権限を足す) と
+[9-2](#9-2-ブラウザツール用の-iam-権限) と
 [11-2](#11-2-ランタイムの環境変数と-jwt-認証) は `agentcore.json` 側にあるので不要です。
 [メモ #1][memo1] のクレデンシャルプロバイダーはスタック管理外なので残ります。
 ただし AgentCore メモリーは作り直しになるため、それまでの会話と好みは消えます。
@@ -873,9 +891,11 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 | 症状                                                                             | 確認                                                                                                                          |
 | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | 「考え中…」のまま返らない                                                        | Amplify とランタイム両方の環境変数。JWT のユーザープール ID / クライアント ID が[メモ #6][memo6] [#7][memo7] と一致しているか |
-| エージェントがブラウザを使えない                                                 | ランタイム実行ロールに 2 つのポリシー（[9-2](#9-2-ブラウザツール用の-iam-権限を足す)）                                        |
+| エージェントがブラウザを使えない                                                 | ランタイム実行ロールに 2 つのポリシー（[9-2](#9-2-ブラウザツール用の-iam-権限)）                                              |
 | Google 連携に失敗する                                                            | [メモ #5][memo5] がランタイム環境変数とワークロード ID の**2 か所**に同じ値で入っているか                                     |
 | カレンダー登録だけ 403                                                           | Google Calendar API が有効か、テストユーザーに自分が入っているか                                                              |
+| 認可画面が `アクセスをブロック: ... は Google の審査プロセスを完了していません`  | 同上。OAuth 同意画面の**テストユーザー**に、そのアカウントを追加する（[7-3](#7-3-oauth-同意画面を設定する)）                  |
+| 「セッション名が不正な形式」を繰り返して操作上限で止まる                         | AgentCore Browser の `session_name` は `^[a-z0-9-]+$` の 10〜36 文字。`main.py` の `SYSTEM_PROMPT` が固定名を指示しているか   |
 | ビルドが失敗する                                                                 | Amplify の `main` ブランチのカードから「ビルド」「デプロイ」ログ                                                              |
 | Amplify の `backend` フェーズが `Package manager bun is not supported.` で落ちる | `ampx` は bun を受け付けません。`amplify.yml` が `pnpm exec ampx` を使っているか（[10](#10-web-アプリをデプロイ)）            |
 | Amplify が `pnpm: command not found`（exit 127）                                 | コンソール側のビルド設定がリポジトリの [`amplify.yml`](amplify.yml) を上書きしていないか。pnpm は `preBuild` で入れています   |
@@ -896,6 +916,7 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 | `pnpm run dev`                                              | Next.js をローカル起動                         |
 | `pnpm run agent:local`                                      | Python エージェントをポート 8080 で起動        |
 | `pnpm run dc:up` / `dc:down` / `dc:ps` / `dc:logs`          | ローカルコンテナ                               |
+| `pnpm run seed:local`                                       | DynamoDB Local にサンプル履歴を投入            |
 | `pnpm run test` / `test:watch` / `test:cov`                 | アプリのテスト                                 |
 | `pnpm run fmt` / `fmt:check` / `lint` / `typecheck`         | 整形と静的検査                                 |
 | `pnpm run check`                                            | 上記すべて + infra テスト                      |
@@ -924,6 +945,31 @@ IAM ロール・ロググループ・CodeBuild プロジェクトは残ります
 
 **認可チェックのクエリを別に持たない**のがポイントです。他人のデータは
 キーの作り方の時点で到達できません。
+
+テーブルには `expiresAt` を属性にした TTL を設定していますが、
+**アプリ側でこの属性を書いている箇所はありません**。`infra/lib/env-config.ts` の
+`sessionTtlDays`（dev 7 / prod 90）も参照されていない状態です。つまり現状、
+データは自動削除されません。有効にするなら `app/lib/session-store.ts` の
+`createSession` と `appendMessage` で `expiresAt` を書く必要があります。
+
+### モジュールの分け方
+
+`app/lib/` には React に依存しないロジックだけを置いています。テストが jsdom
+無しの Node 環境で動くのはこのためです。
+
+| ファイル                            | 役割                                                   |
+| ----------------------------------- | ------------------------------------------------------ |
+| `chat-messages.ts`                  | メッセージ配列の純粋変換（スピナー、バブル分割、掃除） |
+| `reply-buffer.ts`                   | ストリーミング 1 往復ぶんの可変状態                    |
+| `chat-api.ts`                       | チャットが叩く 4 つの API                              |
+| `session-store.ts`                  | DynamoDB の読み書き（セッションとメッセージ）          |
+| `rate-limit.ts`                     | トークンバケット                                       |
+| `dynamo.ts`                         | クライアントとキー構築                                 |
+| `auth-token.ts` / `verify-token.ts` | クライアント側とサーバー側の認証                       |
+
+`app/components/chat.tsx` はこれらを順に呼ぶだけの層で、描画は
+`app/components/message-list.tsx` に分けています。Route Handler も同じ方針で、
+認証して `session-store.ts` を呼び、結果を返すだけです。
 
 ### 主な変更点
 

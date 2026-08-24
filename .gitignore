@@ -15,6 +15,9 @@ agent/agentcore/aws-targets.json
 screenshots/
 handson-memo.local.txt
 tsconfig.tsbuildinfo
+# next dev/build regenerates this, and it references .next/dev types that
+# only exist after a run. Same default as create-next-app.
+next-env.d.ts
 
 # .vscode は「共有する設定」だけ追跡する。
 # settings.json  = oxfmt/oxlint をエディタに強制（pnpm run fmt:check と同じ規約）

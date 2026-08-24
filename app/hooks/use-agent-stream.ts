@@ -42,7 +42,7 @@ const MAX_CONNECT_RETRY = 2
  * The caller carries `rest` into the next chunk, so an event cut in half
  * by a chunk boundary is not lost.
  */
-export function parseEventLines(buffer: string): { events: AgentEvent[]; rest: string } {
+function parseEventLines(buffer: string): { events: AgentEvent[]; rest: string } {
   const lines = buffer.split('\n')
   const rest = lines.pop() ?? ''
   const events: AgentEvent[] = []

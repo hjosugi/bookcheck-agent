@@ -34,8 +34,9 @@ export class BookcheckAgentStack extends Stack {
       pointInTimeRecoverySpecification: {
         pointInTimeRecoveryEnabled: config.pointInTimeRecovery,
       },
-      // Items may carry an `expiresAt` epoch second. Sessions and
-      // messages set it; the rate bucket does not, so it survives.
+      // TTL attribute. Nothing writes `expiresAt` yet, so no item expires;
+      // enabling it here means turning expiry on later needs no table change.
+      // See "モジュールの分け方" in README 付録B.
       timeToLiveAttribute: 'expiresAt',
     })
 

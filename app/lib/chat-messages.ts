@@ -36,7 +36,7 @@ export function completeActiveStatus(messages: Message[]): Message[] {
 }
 
 /** Relabel spinning status rows, leaving them spinning. */
-export function relabelActiveStatus(messages: Message[], statusText: string): Message[] {
+function relabelActiveStatus(messages: Message[], statusText: string): Message[] {
   return messages.map(m => (m.isStatus && !m.statusCompleted ? { ...m, statusText } : m))
 }
 

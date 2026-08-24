@@ -13,7 +13,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { ddb, TABLE, keys, type SessionItem, type MessageItem } from './dynamo'
 
-export const DEFAULT_TITLE = '新しいチャット'
+const DEFAULT_TITLE = '新しいチャット'
 const TITLE_MAX = 30
 // DynamoDB rejects BatchWrite requests larger than this.
 const BATCH_LIMIT = 25
