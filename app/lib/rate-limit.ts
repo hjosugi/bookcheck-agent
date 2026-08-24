@@ -31,6 +31,26 @@ export interface RateResult {
   remaining: number
 }
 
+/** Tokens available now, after time-based refill. Capped at CAPACITY. */
+function refill(bucket: Bucket | undefined, now: number): number {
+  const prevTokens = bucket?.tokens ?? CAPACITY
+  const elapsedSec = bucket ? (now - bucket.updatedAtMs) / 1000 : 0
+  return Math.min(CAPACITY, prevTokens + elapsedSec * REFILL_PER_SEC)
+}
+
+/**
+ * Optimistic lock: a first write must create the item, a later write must
+ * still see the version it read.
+ */
+function guardedPut(next: Bucket, seen: Bucket | undefined) {
+  return new PutCommand({
+    TableName: TABLE,
+    Item: next,
+    ConditionExpression: seen ? 'version = :v' : 'attribute_not_exists(PK)',
+    ExpressionAttributeValues: seen ? { ':v': seen.version } : undefined,
+  })
+}
+
 export async function consumeToken(sub: string): Promise<RateResult> {
   const PK = keys.userPk(sub)
   const SK = keys.rateSk()
@@ -41,10 +61,7 @@ export async function consumeToken(sub: string): Promise<RateResult> {
     const got = await ddb.send(new GetCommand({ TableName: TABLE, Key: { PK, SK } }))
     const cur = got.Item as Bucket | undefined
 
-    // Refill based on elapsed time. Cap at CAPACITY.
-    const prevTokens = cur?.tokens ?? CAPACITY
-    const elapsedSec = cur ? (now - cur.updatedAtMs) / 1000 : 0
-    const tokens = Math.min(CAPACITY, prevTokens + elapsedSec * REFILL_PER_SEC)
+    const tokens = refill(cur, now)
 
     if (tokens < 1) {
       const waitSec = Math.ceil((1 - tokens) / REFILL_PER_SEC)
@@ -60,16 +77,7 @@ export async function consumeToken(sub: string): Promise<RateResult> {
     }
 
     try {
-      await ddb.send(
-        new PutCommand({
-          TableName: TABLE,
-          Item: next,
-          // First write: the item must not exist.
-          // Later writes: the version must match what we read.
-          ConditionExpression: cur ? 'version = :v' : 'attribute_not_exists(PK)',
-          ExpressionAttributeValues: cur ? { ':v': cur.version } : undefined,
-        }),
-      )
+      await ddb.send(guardedPut(next, cur))
       return { allowed: true, remaining: Math.floor(next.tokens) }
     } catch (err) {
       const name = (err as { name?: string }).name

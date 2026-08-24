@@ -81,64 +81,83 @@ def create_session_manager(session_id: str, actor_id: str):
     return AgentCoreMemorySessionManager(agentcore_memory_config=memory_config)
 
 
-@app.entrypoint
-async def invoke(payload: dict[str, Any], context: Any):
-    del context
-    prompt = str(payload.get("prompt", ""))
-    session_id = str(payload.get("session_id") or "local-session")
-    actor_id = str(payload.get("actor_id") or "local-user")
-    event_queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
-
+def build_agent(
+    session_id: str,
+    actor_id: str,
+    event_queue: asyncio.Queue[dict[str, Any] | None],
+) -> Agent:
     browser = AgentCoreBrowser()
     tools = [browser.browser]
     if calendar_is_configured():
         tools.append(make_calendar_tool(event_queue))
 
-    agent = Agent(
+    return Agent(
         model=MODEL_ID,
         tools=tools,
         system_prompt=SYSTEM_PROMPT,
         session_manager=create_session_manager(session_id, actor_id),
     )
 
-    async def agent_stream() -> None:
-        # For Debug output agent message to console
-        in_tool_use = False
-        try:
-            async for event in agent.stream_async(prompt, limits={"turns": MAX_TURNS}):
-                print(f"[DEBUG] agent_stream: event={event}")
-                data = event.get("data")
-                if isinstance(data, str):
-                    if in_tool_use:
-                        await event_queue.put({"type": "tool_result"})
-                        in_tool_use = False
-                    await event_queue.put({"type": "text", "data": data})
-                elif "result" in event:
-                    if getattr(event["result"], "stop_reason", "") == "limit_turns":
-                        if in_tool_use:
-                            await event_queue.put({"type": "tool_result"})
-                            in_tool_use = False
-                        await event_queue.put({"type": "text", "data": LIMIT_NOTICE})
-                elif "current_tool_use" in event:
-                    if in_tool_use:
-                        await event_queue.put({"type": "tool_result"})
-                    tool_info = event["current_tool_use"]
-                    await event_queue.put(
-                        {
-                            "type": "tool_use",
-                            "tool_name": tool_info.get("name", ""),
-                        }
-                    )
-                    in_tool_use = True
-        except Exception as error:
-            await event_queue.put({"type": "error", "data": str(error)})
-        finally:
-            if in_tool_use:
-                await event_queue.put({"type": "tool_result"})
-            await event_queue.put(None)
 
-    # start stream response
-    task = asyncio.create_task(agent_stream())
+def translate_event(
+    event: dict[str, Any], in_tool_use: bool
+) -> tuple[list[dict[str, Any]], bool]:
+    """Map one Strands event to UI events.
+
+    Returns the events to emit and whether a tool is still running. A tool
+    that was running is closed with tool_result before anything else, so the
+    spinner in the UI never outlives its tool.
+    """
+    close = [{"type": "tool_result"}] if in_tool_use else []
+
+    data = event.get("data")
+    if isinstance(data, str):
+        return close + [{"type": "text", "data": data}], False
+
+    if "result" in event:
+        if getattr(event["result"], "stop_reason", "") == "limit_turns":
+            return close + [{"type": "text", "data": LIMIT_NOTICE}], False
+        return [], in_tool_use
+
+    if "current_tool_use" in event:
+        tool_info = event["current_tool_use"]
+        return close + [{"type": "tool_use", "tool_name": tool_info.get("name", "")}], True
+
+    return [], in_tool_use
+
+
+async def pump_agent(
+    agent: Agent,
+    prompt: str,
+    event_queue: asyncio.Queue[dict[str, Any] | None],
+) -> None:
+    """Drain the agent stream into the queue. None marks the end."""
+    in_tool_use = False
+    try:
+        async for event in agent.stream_async(prompt, limits={"turns": MAX_TURNS}):
+            print(f"[DEBUG] agent_stream: event={event}")
+            emitted, in_tool_use = translate_event(event, in_tool_use)
+            for item in emitted:
+                await event_queue.put(item)
+    except Exception as error:
+        await event_queue.put({"type": "error", "data": str(error)})
+    finally:
+        if in_tool_use:
+            await event_queue.put({"type": "tool_result"})
+        await event_queue.put(None)
+
+
+@app.entrypoint
+async def invoke(payload: dict[str, Any], context: Any):
+    del context
+    prompt = str(payload.get("prompt", ""))
+    session_id = str(payload.get("session_id") or "local-session")
+    actor_id = str(payload.get("actor_id") or "local-user")
+
+    event_queue: asyncio.Queue[dict[str, Any] | None] = asyncio.Queue()
+    agent = build_agent(session_id, actor_id, event_queue)
+    task = asyncio.create_task(pump_agent(agent, prompt, event_queue))
+
     while True:
         item = await event_queue.get()
         if item is None:

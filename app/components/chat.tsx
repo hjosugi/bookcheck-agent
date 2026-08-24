@@ -1,31 +1,106 @@
 'use client'
 
-import { useState, useRef, useEffect, type FormEvent } from 'react'
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type Dispatch,
+  type SetStateAction,
+  type SubmitEvent,
+} from 'react'
 import { actorIdFromToken, getAuthToken } from '../lib/auth-token'
-import { Markdown } from './markdown'
+import {
+  consumeRateToken,
+  loadHistory,
+  registerAuthToken,
+  saveMessage,
+  type MessageKind,
+} from '../lib/chat-api'
+import {
+  appendAuthPrompt,
+  completeActiveStatus,
+  dropEmptyAssistant,
+  markInterrupted,
+  removeMessages,
+  setContent,
+  startAssistantMessage,
+  toolDisplayName,
+  upsertToolStatus,
+  type Message,
+} from '../lib/chat-messages'
+import { createReplyBuffer, type ReplyBuffer } from '../lib/reply-buffer'
 import { streamAgent, type AgentEvent } from '../hooks/use-agent-stream'
+import { MessageList } from './message-list'
 import type { SessionSummary } from './sidebar'
 
 const AGENT_ARN = process.env.NEXT_PUBLIC_AGENT_ARN
 
-// One chat bubble or one status badge.
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  isStatus?: boolean
-  statusText?: string
-  statusCompleted?: boolean
-  authUrl?: string
-  interrupted?: boolean
+type Emit = Dispatch<SetStateAction<Message[]>>
+
+function onText(event: Extract<AgentEvent, { type: 'text' }>, buffer: ReplyBuffer, emit: Emit) {
+  if (!event.data) return
+  const content = buffer.append(event.data)
+
+  if (!buffer.needsNewMessage) {
+    emit(prev => setContent(prev, buffer.currentMessageId, content))
+    return
+  }
+  const id = crypto.randomUUID()
+  buffer.startMessage(id)
+  emit(prev => startAssistantMessage(prev, id, content))
 }
 
-function toolDisplayName(toolName: string): string {
-  const names: Record<string, string> = {
-    browser: 'Webブラウザ',
-    add_calendar_event: 'カレンダー登録',
+function onToolUse(
+  event: Extract<AgentEvent, { type: 'tool_use' }>,
+  buffer: ReplyBuffer,
+  emit: Emit,
+) {
+  const placeholderId = buffer.currentMessageId
+  buffer.endMessage()
+  emit(prev =>
+    upsertToolStatus(prev, {
+      displayName: toolDisplayName(event.tool_name || 'ツール'),
+      placeholderId,
+      newStatusId: crypto.randomUUID(),
+    }),
+  )
+}
+
+function onAuthUrl(
+  event: Extract<AgentEvent, { type: 'auth_url' }>,
+  buffer: ReplyBuffer,
+  emit: Emit,
+) {
+  if (!event.url) return
+  buffer.endMessage()
+  const id = crypto.randomUUID()
+  buffer.adoptMessage(id)
+  emit(prev => appendAuthPrompt(prev, id, event.url))
+}
+
+/** Route one stream event to its handler. */
+function createEventHandler(buffer: ReplyBuffer, emit: Emit) {
+  return (event: AgentEvent) => {
+    switch (event.type) {
+      case 'text':
+        return onText(event, buffer, emit)
+      case 'tool_use':
+        return onToolUse(event, buffer, emit)
+      case 'tool_result':
+        return emit(completeActiveStatus)
+      case 'auth_url':
+        return onAuthUrl(event, buffer, emit)
+      case 'error':
+        return
+      default:
+        return unhandled(event)
+    }
   }
-  return names[toolName] || toolName
+}
+
+function unhandled(event: never): void {
+  console.warn('unknown agent event', event)
 }
 
 interface Props {
@@ -56,21 +131,13 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
   const [mountedSessionId] = useState(() => session?.sessionId ?? null)
   useEffect(() => {
     if (!mountedSessionId) return
-
     let cancelled = false
-    ;(async () => {
+    void (async () => {
       try {
-        const token = await getAuthToken()
-        const res = await fetch(`/api/sessions/${mountedSessionId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        if (!res.ok) throw new Error(`HTTP ${res.status}`)
-        const data = (await res.json()) as {
-          messages: { role: 'user' | 'assistant'; content: string; kind?: string }[]
-        }
+        const stored = await loadHistory(mountedSessionId)
         if (cancelled) return
         setMessages(
-          data.messages.map(m => ({
+          stored.map(m => ({
             id: crypto.randomUUID(),
             role: m.role,
             content: m.content,
@@ -86,30 +153,97 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
     }
   }, [mountedSessionId])
 
-  async function saveMessage(
-    token: string,
-    targetSessionId: string,
-    role: 'user' | 'assistant',
-    content: string,
-    kind: 'normal' | 'partial' = 'normal',
-  ) {
-    // Persistence failure must not break the chat. Show a notice only.
+  // Persistence failure must not break the chat. Show a notice only.
+  const persist = useCallback(
+    async (
+      token: string,
+      sessionId: string,
+      role: 'user' | 'assistant',
+      content: string,
+      kind: MessageKind = 'normal',
+    ) => {
+      try {
+        await saveMessage(token, sessionId, role, content, kind)
+        onSessionTouched()
+      } catch {
+        setNotice('メッセージの保存に失敗しました。表示は継続します。')
+      }
+    },
+    [onSessionTouched],
+  )
+
+  // An interrupted turn stores its last segment as partial so the history
+  // can mark it on reload.
+  const persistReply = useCallback(
+    async (token: string, sessionId: string, segments: string[], interrupted: boolean) => {
+      const pending = [...segments]
+      const partial = interrupted ? pending.pop() : undefined
+      for (const segment of pending) {
+        await persist(token, sessionId, 'assistant', segment)
+      }
+      if (partial !== undefined) {
+        await persist(token, sessionId, 'assistant', partial, 'partial')
+      }
+    },
+    [persist],
+  )
+
+  async function sendPrompt(text: string) {
+    setNotice(null)
+    setCanResume(false)
+    setLoading(true)
+
+    // Optimistic bubbles. They show before any network call.
+    const userMsgId = crypto.randomUUID()
+    const replyMsgId = crypto.randomUUID()
+    setMessages(prev => [
+      ...prev,
+      { id: userMsgId, role: 'user', content: text },
+      { id: replyMsgId, role: 'assistant', content: '' },
+    ])
+    const buffer = createReplyBuffer(replyMsgId)
+
     try {
-      await fetch(`/api/sessions/${targetSessionId}`, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ role, content, kind }),
+      const token = await getAuthToken()
+      const active = session ?? (await ensureSession())
+
+      const rate = await consumeRateToken(token)
+      if (!rate.allowed) {
+        setNotice(`送信が多すぎます。約${rate.retryAfterSec}秒後にもう一度お試しください。`)
+        setMessages(prev => removeMessages(prev, [userMsgId, replyMsgId]))
+        setInput(text)
+        return
+      }
+
+      void persist(token, active.sessionId, 'user', text)
+      await registerAuthToken(token)
+
+      const result = await streamAgent({
+        agentArn: AGENT_ARN,
+        token,
+        prompt: text,
+        sessionId: active.sessionId,
+        actorId: actorIdFromToken(token),
+        onEvent: createEventHandler(buffer, setMessages),
       })
-      onSessionTouched()
+      buffer.flush()
+
+      const interrupted = result.status === 'interrupted'
+      if (interrupted) {
+        setNotice('接続が中断されました。')
+        setCanResume(true)
+        setMessages(prev => markInterrupted(prev, buffer.currentMessageId))
+      }
+      await persistReply(token, active.sessionId, buffer.finishedSegments(), interrupted)
     } catch {
-      setNotice('メッセージの保存に失敗しました。表示は継続します。')
+      setNotice('エラーが発生しました。もう一度お試しください。')
+    } finally {
+      setLoading(false)
+      setMessages(dropEmptyAssistant)
     }
   }
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!input.trim() || loading) return
     const text = input.trim()
@@ -124,173 +258,6 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
     if (loading) return
     setCanResume(false)
     await sendPrompt('先ほどの応答が途中で切れました。続きから簡潔に再開してください。')
-  }
-
-  async function sendPrompt(text: string) {
-    setNotice(null)
-    setCanResume(false)
-    setLoading(true)
-
-    // Optimistic user bubble. It shows before any network call.
-    const userMsgId = crypto.randomUUID()
-    setMessages(prev => [...prev, { id: userMsgId, role: 'user', content: text }])
-
-    // Segments of assistant text finished in this turn.
-    const finishedSegments: string[] = []
-
-    let textAccumulator = ''
-    let currentTextMsgId = crypto.randomUUID()
-    let needNewTextMsg = false
-
-    setMessages(prev => [...prev, { id: currentTextMsgId, role: 'assistant', content: '' }])
-
-    try {
-      const token = await getAuthToken()
-      const active = session ?? (await ensureSession())
-
-      // Rate limit gate. One prompt costs one token.
-      const rate = await fetch('/api/rate-check', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (rate.status === 429) {
-        const body = (await rate.json()) as { retryAfterSec?: number }
-        setNotice(`送信が多すぎます。約${body.retryAfterSec ?? 5}秒後にもう一度お試しください。`)
-        // Roll back the optimistic bubbles.
-        setMessages(prev => prev.filter(m => m.id !== userMsgId && m.id !== currentTextMsgId))
-        setInput(text)
-        return
-      }
-
-      // Persist the user message. Fire and forget.
-      void saveMessage(token, active.sessionId, 'user', text)
-
-      // Register the Cognito JWT for the 3LO callback (book 13.4.4).
-      await fetch('/api/set-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token }),
-      }).catch(() => {})
-
-      const flushSegment = () => {
-        if (textAccumulator.trim()) finishedSegments.push(textAccumulator)
-        textAccumulator = ''
-      }
-
-      const onEvent = (event: AgentEvent) => {
-        if (event.type === 'text' && event.data) {
-          textAccumulator += event.data
-          if (needNewTextMsg) {
-            currentTextMsgId = crypto.randomUUID()
-            needNewTextMsg = false
-            setMessages(prev => [
-              ...prev.map(m =>
-                m.isStatus && !m.statusCompleted
-                  ? { ...m, statusCompleted: true, statusText: 'ツール実行完了' }
-                  : m,
-              ),
-              { id: currentTextMsgId, role: 'assistant', content: textAccumulator },
-            ])
-          } else {
-            setMessages(prev =>
-              prev.map(m => (m.id === currentTextMsgId ? { ...m, content: textAccumulator } : m)),
-            )
-          }
-        } else if (event.type === 'tool_use') {
-          flushSegment()
-          needNewTextMsg = true
-          const displayName = toolDisplayName(event.tool_name || 'ツール')
-          setMessages(prev => {
-            const filtered = prev.filter(
-              m => !(m.id === currentTextMsgId && !m.content && !m.isStatus),
-            )
-            const lastStatusIdx = filtered.findLastIndex(m => m.isStatus)
-            const hasTextAfterStatus =
-              lastStatusIdx !== -1 &&
-              filtered.slice(lastStatusIdx + 1).some(m => !m.isStatus && m.content)
-            if (lastStatusIdx !== -1 && !hasTextAfterStatus) {
-              return filtered.map((m, i) =>
-                i === lastStatusIdx
-                  ? { ...m, statusText: `${displayName} を実行中…`, statusCompleted: false }
-                  : m,
-              )
-            }
-            return [
-              ...filtered,
-              {
-                id: crypto.randomUUID(),
-                role: 'assistant',
-                content: '',
-                isStatus: true,
-                statusText: `${displayName} を実行中…`,
-                statusCompleted: false,
-              },
-            ]
-          })
-        } else if (event.type === 'tool_result') {
-          setMessages(prev =>
-            prev.map(m =>
-              m.isStatus && !m.statusCompleted
-                ? { ...m, statusCompleted: true, statusText: 'ツール実行完了' }
-                : m,
-            ),
-          )
-        } else if (event.type === 'auth_url' && event.url) {
-          flushSegment()
-          currentTextMsgId = crypto.randomUUID()
-          needNewTextMsg = true
-          setMessages(prev => [
-            ...prev.map(m =>
-              m.isStatus && !m.statusCompleted ? { ...m, statusText: 'Google連携を待機中…' } : m,
-            ),
-            {
-              id: currentTextMsgId,
-              role: 'assistant',
-              content: 'Googleアカウントの接続が必要です。下のボタンをクリックしてください。',
-              authUrl: event.url,
-            },
-          ])
-        }
-      }
-
-      const result = await streamAgent({
-        agentArn: AGENT_ARN,
-        token,
-        prompt: text,
-        sessionId: active.sessionId,
-        actorId: actorIdFromToken(token),
-        onEvent,
-      })
-
-      flushSegment()
-
-      if (result.status === 'interrupted') {
-        // Save what arrived, mark it, and offer a resume.
-        setNotice('接続が中断されました。')
-        setCanResume(true)
-        setMessages(prev =>
-          prev.map(m => (m.id === currentTextMsgId ? { ...m, interrupted: true } : m)),
-        )
-        if (finishedSegments.length > 0) {
-          const partial = finishedSegments.pop()!
-          for (const seg of finishedSegments) {
-            await saveMessage(token, active.sessionId, 'assistant', seg)
-          }
-          await saveMessage(token, active.sessionId, 'assistant', partial, 'partial')
-        }
-      } else {
-        for (const seg of finishedSegments) {
-          await saveMessage(token, active.sessionId, 'assistant', seg)
-        }
-      }
-    } catch {
-      setNotice('エラーが発生しました。もう一度お試しください。')
-    } finally {
-      setLoading(false)
-      setMessages(prev =>
-        prev.filter(m => !(m.role === 'assistant' && !m.isStatus && !m.content.trim())),
-      )
-    }
   }
 
   return (
@@ -311,60 +278,7 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
         </div>
       )}
 
-      <div className="messages">
-        {messages.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon">📖</div>
-            <p>気になる技術書のジャンルや、</p>
-            <p>登録したい予定を教えてください</p>
-          </div>
-        )}
-        {messages.map(m => {
-          if (m.isStatus) {
-            return (
-              <div key={m.id} className="message-row assistant">
-                <div className={`status-badge ${m.statusCompleted ? 'completed' : 'active'}`}>
-                  {m.statusCompleted ? (
-                    <span className="check-icon">&#10003;</span>
-                  ) : (
-                    <span className="spinner" />
-                  )}
-                  <span>{m.statusText}</span>
-                </div>
-              </div>
-            )
-          }
-          return (
-            <div key={m.id} className={`message-row ${m.role}`}>
-              <div className={`bubble ${m.role} ${m.interrupted ? 'interrupted' : ''}`}>
-                {m.role === 'assistant' ? (
-                  m.content ? (
-                    <>
-                      <Markdown content={m.content} />
-                      {m.interrupted && <span className="interrupted-tag">中断</span>}
-                      {m.authUrl && (
-                        <a
-                          href={m.authUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="auth-button"
-                        >
-                          Google連携を開始 →
-                        </a>
-                      )}
-                    </>
-                  ) : (
-                    <span className="shimmer-text">考え中…</span>
-                  )
-                ) : (
-                  m.content
-                )}
-              </div>
-            </div>
-          )
-        })}
-        <div ref={endRef} />
-      </div>
+      <MessageList messages={messages} endRef={endRef} />
 
       <form className="input-area" onSubmit={handleSubmit}>
         <input
