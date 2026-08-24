@@ -32,8 +32,4 @@ frontend:
       - '**/*'
   cache:
     paths:
-      # node_modules は意図的にキャッシュしない。--frozen-lockfile と組み合わせると
-      # 別コミットで作られた node_modules がそのまま再利用され、lockfile と実体が
-      # ずれたままビルドが通ってしまう。pnpm はストアを温めれば十分速い。
       - .pnpm-store/**/*
-      - .next/cache/**/*
