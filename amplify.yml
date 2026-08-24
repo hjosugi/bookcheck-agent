@@ -23,6 +23,9 @@ frontend:
     build:
       commands:
         - pnpm run build
+    postBuild:
+      commands:
+        - pnpm store prune
   artifacts:
     baseDirectory: .next
     files:

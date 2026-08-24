@@ -37,7 +37,16 @@ export async function verifyAccessToken(token: string): Promise<AuthedUser | nul
   try {
     const payload = await getVerifier().verify(token)
     return { sub: payload.sub }
-  } catch {
+  } catch (error) {
+    // Log the reason, never the token. Every failure here leaves the caller
+    // with a bare 401, which cannot distinguish a missing COGNITO_* variable
+    // (getVerifier throws before any check runs) from an expired token or a
+    // client-id mismatch. Without this line the only way to tell them apart
+    // is to redeploy with logging added.
+    console.error(
+      '[auth] access token rejected:',
+      error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+    )
     return null
   }
 }
