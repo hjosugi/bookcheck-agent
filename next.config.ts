@@ -1,6 +1,27 @@
 import type { NextConfig } from 'next'
 
+// Keep a variable out of `env` entirely when the build has no value for it.
+// Substituting an empty string instead would defeat the `??` fallbacks the
+// callers rely on — `'' ?? 'default'` is `''`, so app/lib/dynamo.ts would end
+// up querying a table with no name rather than its default one.
+function forwardedEnv(names: readonly string[]): Record<string, string> {
+  return Object.fromEntries(
+    names.flatMap(name => {
+      const value = process.env[name]
+      return value ? [[name, value]] : []
+    }),
+  )
+}
+
 const nextConfig: NextConfig = {
+  env: forwardedEnv([
+    'COGNITO_USER_POOL_ID',
+    'COGNITO_CLIENT_ID',
+    // Without this the Amplify variable was inert and app/lib/dynamo.ts silently
+    // fell back to its default table name, which happened to be right.
+    'DYNAMO_TABLE_NAME',
+  ]),
+
   async rewrites() {
     return [
       {
