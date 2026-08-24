@@ -29,7 +29,8 @@
     "infra:test": "pnpm --filter bookcheck-agent-infra run test",
     "infra:typecheck": "pnpm --filter bookcheck-agent-infra run typecheck",
     "infra:synth:dev": "pnpm --filter bookcheck-agent-infra run synth:dev",
-    "infra:check": "pnpm run infra:typecheck && pnpm run infra:test"
+    "infra:check": "pnpm run infra:typecheck && pnpm run infra:test",
+    "seed:local": "node --env-file=.env.local scripts/seed-local.mjs"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "6.15.5",

@@ -14,6 +14,10 @@ function forwardedEnv(names: readonly string[]): Record<string, string> {
 }
 
 const nextConfig: NextConfig = {
+  // next dev/build writes AGENTS.md and CLAUDE.md at the repo root on every
+  // run. They are generated files, so they are not kept in git.
+  agentRules: false,
+
   env: forwardedEnv([
     'COGNITO_USER_POOL_ID',
     'COGNITO_CLIENT_ID',
