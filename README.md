@@ -110,9 +110,11 @@ pnpm run setup
 pnpm run setup:check
 ```
 
-`agent/agentcore/cdk/` だけは pnpm workspace に含めていません。AgentCore CLI が
-そのディレクトリで `npm install` を直接実行するためです。理由は
-[`agent/agentcore/cdk/README.md`](agent/agentcore/cdk/README.md) に書いてあります。
+`agent/agentcore/cdk/` だけは pnpm workspace に含めていません。`@aws/agentcore`
+0.27.1 がパッケージマネージャを判定せず、そのディレクトリで `npm install` を
+直接実行するためです。pnpm に任せるとロックファイルが二重になり、デプロイのたびに
+CLI の npm install がレイアウトを上書きします。ここは npm のまま
+`package-lock.json` をコミットしておきます。
 このディレクトリは `agentcore` コマンドが面倒を見るので、手で触る必要はありません。
 
 ### 3-3. 設定ファイルを作る
