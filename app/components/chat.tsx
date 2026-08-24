@@ -49,17 +49,19 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
   }, [messages])
 
   // Load history for the selected session.
-  // The parent remounts this component when the session changes
-  // (key={activeId}), so there is no state to reset here.
-  const sessionId = session?.sessionId
+  // The parent remounts this component when the user switches sessions,
+  // so history only needs loading once, for the session present at mount.
+  // Reading session?.sessionId on every render instead would re-enter here
+  // when the first message creates a session, wiping the streaming reply.
+  const [mountedSessionId] = useState(() => session?.sessionId ?? null)
   useEffect(() => {
-    if (!sessionId) return
+    if (!mountedSessionId) return
 
     let cancelled = false
     ;(async () => {
       try {
         const token = await getAuthToken()
-        const res = await fetch(`/api/sessions/${sessionId}`, {
+        const res = await fetch(`/api/sessions/${mountedSessionId}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -82,7 +84,7 @@ export function Chat({ session, ensureSession, onSessionTouched }: Props) {
     return () => {
       cancelled = true
     }
-  }, [sessionId])
+  }, [mountedSessionId])
 
   async function saveMessage(
     token: string,

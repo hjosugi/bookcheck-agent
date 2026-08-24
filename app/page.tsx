@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { getAuthToken } from './lib/auth-token'
 import { Sidebar, type SessionSummary } from './components/sidebar'
 import { Chat } from './components/chat'
@@ -18,7 +18,18 @@ export default function Page() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [newChatNonce, setNewChatNonce] = useState(0)
+  // Identity of the mounted <Chat>. Deliberately separate from activeId:
+  // creating a session mid-send moves activeId, and if that fed the key
+  // React would remount <Chat> and throw away the in-flight stream.
+  const [chatKey, setChatKey] = useState('new-0')
+  const newChatCount = useRef(0)
+
+  // A blank chat that is not tied to any session id yet.
+  const openBlankChat = useCallback(() => {
+    newChatCount.current += 1
+    setActiveId(null)
+    setChatKey(`new-${newChatCount.current}`)
+  }, [])
 
   const fetchSessions = useCallback(async (): Promise<SessionSummary[]> => {
     try {
@@ -56,13 +67,13 @@ export default function Page() {
   }, [])
 
   const handleNew = () => {
-    setActiveId(null)
-    setNewChatNonce(n => n + 1)
+    openBlankChat()
     setSidebarOpen(false)
   }
 
   const handleSelect = (id: string) => {
     setActiveId(id)
+    setChatKey(id)
     setSidebarOpen(false)
   }
 
@@ -72,7 +83,9 @@ export default function Page() {
     try {
       await authedFetch(`/api/sessions/${id}`, { method: 'DELETE' })
       setSessions(prev => prev.filter(s => s.sessionId !== id))
-      if (activeId === id) setActiveId(null)
+      // Remount into a blank chat, otherwise the deleted session's
+      // messages stay on screen.
+      if (activeId === id) openBlankChat()
     } finally {
       setBusy(false)
     }
@@ -103,7 +116,7 @@ export default function Page() {
 
       <main className="main">
         <Chat
-          key={activeId ?? `new-${newChatNonce}`}
+          key={chatKey}
           session={activeSession}
           ensureSession={createSession}
           onSessionTouched={refreshSessions}
