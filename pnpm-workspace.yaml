@@ -23,3 +23,34 @@ allowBuilds:
   esbuild: true # プラットフォーム別バイナリの配置
   core-js: false # 寄付の案内を出すだけ
   protobufjs: false # 依存側のバージョン指定を警告するだけで、生成物は作らない
+
+# Fixed versions for security advisories in the dependency tree.
+overrides:
+  "@graphql-tools/utils@>=12.0.0 <12.0.2": "12.1.0"
+  "@opentelemetry/core@>=2.0.0 <2.8.0": "2.12.0"
+  "@vitest/mocker@>=4.0.0 <4.1.12": "4.1.12"
+  "brace-expansion@>=1.0.0 <1.1.21": "1.1.21"
+  "brace-expansion@>=5.0.0 <5.0.12": "5.0.12"
+  "fast-uri@>=3.0.0 <3.1.9": "3.1.9"
+  "handlebars@>=4.0.0 <4.7.10": "4.7.10"
+  "immutable@>=3.0.0 <3.8.4": "3.8.4"
+  "js-yaml@>=4.0.0 <4.3.2": "4.3.2"
+  "lodash@>=4.0.0 <4.18.0": "4.18.1"
+  "mysql2@>=3.0.0 <3.23.1": "3.24.6"
+  "sharp@>=0.0.0 <0.35.5": "0.35.5"
+  "source-map-js@>=1.0.0 <1.2.2": "1.2.2"
+  "tinypool@>=2.0.0 <2.1.2": "2.2.0"
+  "vite@>=8.0.0 <8.3.3": "8.3.5"
+  "zod@>=4.0.0 <4.6.6": "4.6.7"
+
+minimumReleaseAgeExclude:
+  - '@next/env@16.4.3'
+  - '@next/swc-darwin-arm64@16.4.3'
+  - '@next/swc-darwin-x64@16.4.3'
+  - '@next/swc-linux-arm64-gnu@16.4.3'
+  - '@next/swc-linux-arm64-musl@16.4.3'
+  - '@next/swc-linux-x64-gnu@16.4.3'
+  - '@next/swc-linux-x64-musl@16.4.3'
+  - '@next/swc-win32-arm64-msvc@16.4.3'
+  - '@next/swc-win32-x64-msvc@16.4.3'
+  - next@16.4.3
