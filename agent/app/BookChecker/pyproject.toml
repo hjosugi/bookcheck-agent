@@ -15,7 +15,7 @@ dependencies = [
   "playwright==1.58.0",
   "requests==2.33.1",
   "strands-agents>=1.13.0",
-  "strands-agents-tools==0.5.1",
+  "strands-agents-tools==0.8.12",
 ]
 
 [tool.hatch.build.targets.wheel]
