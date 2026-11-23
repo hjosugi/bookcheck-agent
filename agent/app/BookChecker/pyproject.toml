@@ -18,5 +18,12 @@ dependencies = [
   "strands-agents-tools==0.5.1",
 ]
 
+[tool.uv]
+# strands-agents-tools 0.5.1 declares pillow<13, but every open Pillow advisory
+# is only fixed in 13.0.0. Pillow is imported only by strands_tools.image_reader
+# and strands_tools.use_computer, which this agent does not load. Remove this
+# once strands-agents-tools is upgraded past the pillow<13 cap.
+override-dependencies = ["pillow>=13.0.0,<14"]
+
 [tool.hatch.build.targets.wheel]
 packages = ["."]
